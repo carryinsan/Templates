@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Omni-Architect Pro | 20-Feature SaaS Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --doc-bg: #ffffff; 
+            --doc-text: #171717; 
+            --watermark: ''; 
+            --accent: #6366f1; /* Indigo 500 */
+            --accent-hover: #4f46e5;
+            --sidebar-width: 320px;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #09090b; 
+            color: #f4f4f5; 
+            overflow: hidden; 
+            overscroll-behavior-y: none;
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+
+        /* Canvas Styles */
+        .canvas-wrapper { 
+            background: #09090b; 
+            background-image: radial-gradient(#27272a 1px, transparent 1px);
+            background-size: 24px 24px;
+            overflow-y: auto; 
+            height: calc(100vh - 64px); 
+            scroll-behavior: smooth;
+            position: relative;
+        }
+        
+        #doc-canvas { 
+            width: 210mm; 
+            min-height: 297mm; 
+            background: var(--doc-bg); 
+            color: var(--doc-text); 
+            padding: 20mm; 
+            margin: 2rem auto; 
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 20px 25px -5px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            position: relative; 
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        #doc-canvas.view-only { pointer-events: none; user-select: text; }
+        #doc-canvas.view-only [contenteditable="true"] { pointer-events: auto; }
+        
+        #doc-canvas::after { 
+            content: var(--watermark); 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%) rotate(-45deg); 
+            font-size: 8rem; color: #000; opacity: 0.05; 
+            pointer-events: none; white-space: nowrap; font-weight: 800; 
+            z-index: 0;
+        }
+        
+        [contenteditable]:empty::before { 
+            content: attr(data-placeholder); 
+            color: #a1a1aa; pointer-events: none; display: block; 
+        }
+
+        .calc-field { background: rgba(16, 185, 129, 0.1); border-bottom: 2px dashed #10b981; padding: 2px 4px; border-radius: 4px; }
+        .smart-field { background: rgba(99, 102, 241, 0.1); border-bottom: 2px dashed var(--accent); padding: 2px 4px; border-radius: 4px; }
+        .locked-section { border: 1px solid #ef4444; position: relative; }
+        .locked-section::after { content: '🔒 Locked'; position: absolute; top: -10px; right: 5px; font-size: 10px; background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; }
+        .audit-issue { background: rgba(239, 68, 68, 0.2); border-bottom: 2px wavy #ef4444; }
+
+        /* Inputs & Buttons */
+        .premium-input {
+            background: #18181b; border: 1px solid #27272a; color: #f4f4f5;
+            border-radius: 8px; padding: 8px 12px; font-size: 0.875rem;
+            transition: all 0.2s; outline: none; width: 100%;
+        }
+        .premium-input:focus { border-color: var(--accent); }
+
+        .btn {
+            background: #18181b; border: 1px solid #27272a; color: #e4e4e7;
+            border-radius: 8px; padding: 6px 12px; font-size: 0.8125rem; font-weight: 500;
+            transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            cursor: pointer;
+        }
+        .btn:hover { background: #27272a; color: #fff; border-color: #3f3f46; }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent-hover); }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        /* Loaders & Modals */
+        .loader { border: 2px solid transparent; border-top: 2px solid var(--accent); border-radius: 50%; width: 14px; height: 14px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .modal-bg { background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
+        
+        /* Floating Context Menu */
+        #context-menu { 
+            display: none; position: fixed; background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(12px);
+            border: 1px solid #3f3f46; border-radius: 8px; padding: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+            z-index: 1000; flex-direction: column; min-width: 150px;
+        }
+        #context-menu button { text-align: left; padding: 8px 12px; font-size: 13px; border-radius: 4px; display: flex; align-items: center; gap: 8px; color: #d4d4d8; }
+        #context-menu button:hover { background: #27272a; color: white; }
+
+        /* Cmd+K Palette */
+        #cmd-palette { display: none; }
+        #cmd-palette.active { display: flex; }
+
+        /* Signature Canvas */
+        #sig-canvas { border: 1px dashed #3f3f46; background: #fff; border-radius: 8px; cursor: crosshair; touch-action: none;}
+
+        /* Layout & Mobile Adjustments */
+        .sidebar { width: var(--sidebar-width); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        @media (max-width: 1024px) {
+            .canvas-wrapper { padding: 0; }
+            #doc-canvas { width: 100%; margin: 0; border-radius: 0; min-height: 100vh; }
+            
+            /* Mobile Drawers */
+            .sidebar { position: fixed; top: 64px; bottom: 0; z-index: 50; background: rgba(9, 9, 11, 0.98); backdrop-filter: blur(20px); border: none; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+            #sidebar-left { left: 0; transform: translateX(-100%); border-right: 1px solid #27272a;}
+            #sidebar-left.open { transform: translateX(0); }
+            #sidebar-right { right: 0; transform: translateX(100%); border-left: 1px solid #27272a;}
+            #sidebar-right.open { transform: translateX(0); }
+            
+            /* Bottom Mobile Nav */
+            .mobile-nav { display: flex; }
+        }
+        @media (min-width: 1025px) { .mobile-nav { display: none !important; } }
+        
+        @media print { 
+            body * { visibility: hidden; } 
+            #doc-canvas, #doc-canvas * { visibility: visible; } 
+            #doc-canvas { position: absolute; left: 0; top: 0; margin: 0; padding: 0; box-shadow: none; width: 100%; border-radius: 0; } 
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-sm">
+
+    <!-- REQUIRED ONBOARDING MODAL -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[9999] hidden flex-col items-center justify-center">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-xl p-8 w-full max-w-sm mx-4 shadow-2xl relative overflow-hidden">
+            <!-- Decorative accent -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+            
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20"><i data-lucide="layers" class="w-6 h-6 text-white"></i></div>
+                <div>
+                    <h2 class="text-white text-xl font-bold tracking-tight">Omni<span class="text-indigo-400">Pro</span></h2>
+                    <p class="text-zinc-500 text-xs">Architect Edition</p>
+                </div>
+            </div>
+            
+            <p class="text-zinc-300 text-sm mb-5">Please enter your credentials to initialize your workspace.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-1 block">Your Name (Required)</label>
+                    <input type="text" id="auth-name" placeholder="e.g. John Doe" class="premium-input bg-black border-zinc-800 focus:border-indigo-500 py-3">
+                </div>
+                <div>
+                    <label class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-1 block">Access Key / Password (Optional)</label>
+                    <input type="password" id="auth-pass" placeholder="••••••••" class="premium-input bg-black border-zinc-800 focus:border-indigo-500 py-3">
+                </div>
+                <button onclick="handleLogin()" class="w-full btn btn-primary py-3 mt-2 text-sm font-semibold tracking-wide shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all">Enter Workspace</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER (Permissions, Share, Export) -->
+    <header class="h-16 flex justify-between items-center px-4 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md z-40 relative">
+        <div class="font-bold text-lg tracking-tight flex items-center gap-2">
+            <div class="w-7 h-7 rounded bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20"><i data-lucide="layers" class="w-4 h-4 text-white"></i></div>
+            OMNI<span class="text-indigo-400">PRO</span> 
+        </div>
+        
+        <!-- Feature 11: Smart Permissions -->
+        <div class="hidden md:flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+            <i data-lucide="shield" class="w-4 h-4 text-zinc-400 ml-2"></i>
+            <select id="role-selector" class="bg-transparent text-zinc-300 text-xs outline-none pr-2 cursor-pointer" onchange="updatePermissions()">
+                <option value="admin">Admin (Full Edit)</option>
+                <option value="editor">Editor (Fill Fields)</option>
+                <option value="viewer">Viewer (Read Only)</option>
+            </select>
+            <span id="user-greeting" class="text-xs text-indigo-400 font-medium ml-2 px-2 border-l border-zinc-700"></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Feature 14: Command Palette Hint -->
+            <button class="hidden lg:flex btn border-transparent text-zinc-500 text-xs mr-2" onclick="toggleCmdPalette()">Cmd/Ctrl + K</button>
+            
+            <!-- Feature 7: Share Smart Link -->
+            <button onclick="generateSmartLink()" class="btn hidden sm:flex border-transparent hover:text-indigo-400" title="Generate Shareable Link"><i data-lucide="link" class="w-4 h-4"></i> Share</button>
+            
+            <!-- Feature 9 & 20: Exports -->
+            <div class="group relative">
+                <button class="btn btn-primary"><i data-lucide="download" class="w-4 h-4"></i> Export</button>
+                <div class="hidden group-hover:flex absolute right-0 top-full mt-1 flex-col bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl w-40 overflow-hidden z-50">
+                    <button onclick="exportDoc('pdf')" class="text-left px-4 py-2 hover:bg-zinc-800 text-xs flex items-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> PDF Document</button>
+                    <button onclick="exportDoc('wa')" class="text-left px-4 py-2 hover:bg-zinc-800 text-xs flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-green-500"></i> WhatsApp</button>
+                    <button onclick="exportDoc('email')" class="text-left px-4 py-2 hover:bg-zinc-800 text-xs flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> Email Client</button>
+                    <button onclick="exportDoc('api')" class="text-left px-4 py-2 hover:bg-zinc-800 text-xs flex items-center gap-2"><i data-lucide="code" class="w-4 h-4 text-purple-400"></i> Structured JSON</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- LEFT SIDEBAR: PANEL 1 - TEMPLATE ARCHITECT (Creation & Brain) -->
+        <aside id="sidebar-left" class="sidebar flex flex-col bg-zinc-900/95 border-r border-zinc-800">
+            <div class="p-4 border-b border-zinc-800 bg-zinc-900">
+                <h3 class="font-semibold text-sm flex justify-between items-center text-zinc-100">
+                    <span class="flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i> Template Architect</span>
+                    <div id="loader-left" class="loader hidden"></div>
+                </h3>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- Feature 5: Multi-Step Workflows -->
+                <div>
+                    <label class="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2 block">Agent Workflow</label>
+                    <textarea id="prompt-create" class="premium-input bg-black/50 border-zinc-800 resize-none min-h-[80px]" placeholder="e.g. 'Generate a freelance invoice. Then audit it. Then add styling.'"></textarea>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="runWorkflow('create')" class="btn btn-primary flex-1"><i data-lucide="zap" class="w-4 h-4"></i> Magic Draft</button>
+                        <!-- Feature 6: Attachment Intelligence -->
+                        <button onclick="document.getElementById('file-upload').click()" class="btn border-zinc-700 hover:border-indigo-500" title="Upload Doc to Convert"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+                        <input type="file" id="file-upload" class="hidden" accept="image/*, .pdf" onchange="handleAttachment(event)">
+                    </div>
+                </div>
+
+                <!-- Feature 2 & 16: Document Brain & Autofill -->
+                <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-800/50">
+                    <h4 class="font-medium text-xs text-zinc-400 uppercase flex items-center gap-2 mb-3"><i data-lucide="brain" class="w-3.5 h-3.5 text-pink-400"></i> Document Brain</h4>
+                    <div class="space-y-2" id="doc-brain-inputs">
+                        <input type="text" id="ctx-client" placeholder="Client Name [Autofill]" class="premium-input bg-zinc-900 text-xs py-1.5" onchange="updateBrain()">
+                        <input type="text" id="ctx-amount" placeholder="Base Amount" class="premium-input bg-zinc-900 text-xs py-1.5" onchange="updateBrain()">
+                        <div class="flex items-center justify-between text-xs mt-2">
+                            <span class="text-zinc-500">Auto-inject variables</span>
+                            <button onclick="autofillDoc()" class="text-indigo-400 hover:underline">Apply</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 10: Template Marketplace -->
+                <div>
+                    <h4 class="font-medium text-xs text-zinc-400 uppercase flex items-center gap-2 mb-3"><i data-lucide="store" class="w-3.5 h-3.5 text-yellow-400"></i> Template Market</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="loadTemplate('invoice')" class="btn justify-start text-xs"><i data-lucide="receipt" class="w-3.5 h-3.5"></i> Smart Invoice</button>
+                        <button onclick="loadTemplate('contract')" class="btn justify-start text-xs"><i data-lucide="scale" class="w-3.5 h-3.5"></i> NDA / Legal</button>
+                        <button onclick="loadTemplate('proposal')" class="btn justify-start text-xs"><i data-lucide="presentation" class="w-3.5 h-3.5"></i> Pitch Deck</button>
+                        <button onclick="loadTemplate('receipt')" class="btn justify-start text-xs"><i data-lucide="banknote" class="w-3.5 h-3.5"></i> Cash Receipt</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER: CANVAS AREA -->
+        <main class="flex-1 canvas-wrapper" id="main-scroll">
+            <div id="doc-canvas" contenteditable="true" oninput="handleTyping()" spellcheck="false">
+                <h1 style="font-size: 2.25rem; font-weight: 700; border-bottom: 2px solid #e5e5e5; padding-bottom: 0.75rem; margin-bottom: 1.5rem;">New Document</h1>
+                <p data-placeholder="Start typing or use the Architect panel to generate..." style="line-height: 1.6; color: #52525b;"></p>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR: PANEL 2 - DOCUMENT EDITOR (Refinement & Tools) -->
+        <aside id="sidebar-right" class="sidebar flex flex-col bg-zinc-900/95 border-l border-zinc-800">
+            <div class="p-4 border-b border-zinc-800 bg-zinc-900 flex justify-between items-center">
+                <span class="flex items-center gap-2 font-semibold text-sm text-zinc-100"><i data-lucide="pen-tool" class="w-4 h-4 text-emerald-400"></i> Editor & Tools</span>
+                <div id="loader-right" class="loader hidden"></div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- AI Editor Actions -->
+                <div>
+                    <textarea id="prompt-edit" class="premium-input bg-black/50 border-zinc-800 resize-none min-h-[60px]" placeholder="Ask AI to modify current selection or full doc..."></textarea>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <!-- Feature 19: AI Improve Design -->
+                        <button onclick="aiAction('design')" class="btn border-zinc-700 text-xs"><i data-lucide="palette" class="w-3.5 h-3.5"></i> Beautify UI</button>
+                        <!-- Feature 15: AI Explain -->
+                        <button onclick="aiAction('explain')" class="btn border-zinc-700 text-xs"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> Explain Doc</button>
+                    </div>
+                </div>
+
+                <hr class="border-zinc-800">
+
+                <!-- Feature 3: Audit Mode -->
+                <button onclick="runAudit()" class="w-full btn border-orange-500/30 text-orange-400 hover:bg-orange-500/10 justify-center py-2.5">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Run Smart Audit
+                </button>
+
+                <!-- Feature 1: Data-Aware Auto-Calc -->
+                <div class="bg-zinc-800/30 p-3 rounded-lg border border-zinc-800">
+                    <h4 class="font-medium text-xs text-zinc-400 uppercase flex items-center justify-between mb-2">
+                        <span class="flex items-center gap-2"><i data-lucide="calculator" class="w-3.5 h-3.5 text-blue-400"></i> Math Engine</span>
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                    </h4>
+                    <p class="text-[10px] text-zinc-500 leading-tight mb-2">Use <code class="bg-black px-1 rounded text-blue-300">[Amount] * 0.18</code> syntax in doc. Calculates automatically.</p>
+                    <button onclick="forceCalculate()" class="w-full btn bg-zinc-900 border-zinc-700 text-xs py-1">Force Recalculate</button>
+                </div>
+
+                <!-- Feature 17 & 8: Signature & Payment -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="openSignature()" class="btn border-zinc-700 text-xs flex-col py-3 h-auto gap-2"><i data-lucide="pen-line" class="w-5 h-5 text-zinc-400"></i> Sign Doc</button>
+                    <div class="border border-zinc-700 rounded-lg p-2 text-center flex flex-col justify-center gap-1 cursor-pointer hover:bg-zinc-800 transition" onclick="togglePaymentStatus()">
+                        <i data-lucide="credit-card" class="w-5 h-5 mx-auto text-zinc-400"></i>
+                        <span id="pay-status" class="text-xs font-semibold text-yellow-500">Pending</span>
+                    </div>
+                </div>
+
+                <!-- Feature 4 & 13: History & Analytics -->
+                <div>
+                    <h4 class="font-medium text-xs text-zinc-400 uppercase mb-3">Document Stats</h4>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-zinc-900 border border-zinc-800 p-2 rounded flex flex-col items-center">
+                            <span class="text-[10px] text-zinc-500 uppercase">Words</span>
+                            <span id="stat-words" class="font-bold text-zinc-200">0</span>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 p-2 rounded flex flex-col items-center">
+                            <span class="text-[10px] text-zinc-500 uppercase">Time Spent</span>
+                            <span id="stat-time" class="font-bold text-zinc-200">0m</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-zinc-500 flex items-center gap-1"><i data-lucide="history" class="w-3 h-3"></i> <span id="ver-count">0</span> Versions</span>
+                        <button onclick="restoreLastVersion()" class="text-indigo-400 hover:underline">Undo to Last</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav fixed bottom-0 left-0 right-0 h-16 bg-zinc-950 border-t border-zinc-800 z-50 flex justify-around items-center px-2 pb-safe">
+        <button onclick="toggleMobilePanel('sidebar-left')" class="flex flex-col items-center p-2 text-zinc-400 hover:text-indigo-400">
+            <i data-lucide="sparkles" class="w-5 h-5 mb-1"></i><span class="text-[10px]">Architect</span>
+        </button>
+        <button onclick="closeMobilePanels()" class="flex flex-col items-center p-2 text-emerald-400">
+            <div class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center -mt-6 shadow-lg"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+            <span class="text-[10px] mt-1">Canvas</span>
+        </button>
+        <button onclick="toggleMobilePanel('sidebar-right')" class="flex flex-col items-center p-2 text-zinc-400 hover:text-emerald-400">
+            <i data-lucide="pen-tool" class="w-5 h-5 mb-1"></i><span class="text-[10px]">Editor</span>
+        </button>
+    </nav>
+
+    <!-- Context Menu (F12 Lock, AI Actions) -->
+    <div id="context-menu">
+        <button onclick="ctxExec('rewrite')"><i data-lucide="wand-2" class="w-3.5 h-3.5 text-indigo-400"></i> AI Rewrite</button>
+        <button onclick="ctxExec('summarize')"><i data-lucide="align-left" class="w-3.5 h-3.5 text-blue-400"></i> Summarize</button>
+        <div class="h-px bg-zinc-800 my-1 mx-2"></div>
+        <button onclick="ctxExec('lock')"><i data-lucide="lock" class="w-3.5 h-3.5 text-red-400"></i> Lock Section</button>
+        <button onclick="ctxExec('unlock')"><i data-lucide="unlock" class="w-3.5 h-3.5 text-emerald-400"></i> Unlock</button>
+    </div>
+
+    <!-- Feature 14: Command Palette Modal -->
+    <div id="cmd-palette" class="fixed inset-0 modal-bg z-[100] flex items-start justify-center pt-[15vh]">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+            <div class="flex items-center px-4 py-3 border-b border-zinc-800">
+                <i data-lucide="search" class="w-5 h-5 text-zinc-500 mr-3"></i>
+                <input type="text" id="cmd-input" class="bg-transparent border-none text-white w-full outline-none text-lg" placeholder="Ask AI or type command..." autocomplete="off">
+            </div>
+            <div class="p-2 max-h-60 overflow-y-auto" id="cmd-results">
+                <button class="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-indigo-500/20 hover:text-indigo-300 rounded" onclick="executeCmd('invoice')">Generate Invoice Template</button>
+                <button class="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-indigo-500/20 hover:text-indigo-300 rounded" onclick="executeCmd('audit')">Run Document Audit</button>
+                <button class="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-indigo-500/20 hover:text-indigo-300 rounded" onclick="executeCmd('export_pdf')">Export to PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 17: Signature Modal -->
+    <div id="sig-modal" class="fixed inset-0 modal-bg z-[100] hidden items-center justify-center">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-xl p-4 w-full max-w-sm mx-4">
+            <h3 class="text-white mb-2 font-medium">Draw Signature</h3>
+            <canvas id="sig-canvas" width="350" height="150" class="w-full"></canvas>
+            <div class="flex justify-between mt-3 gap-2">
+                <button onclick="document.getElementById('sig-modal').classList.remove('flex'); document.getElementById('sig-modal').classList.add('hidden');" class="btn flex-1">Cancel</button>
+                <button onclick="clearSignature()" class="btn flex-1">Clear</button>
+                <button onclick="saveSignature()" class="btn btn-primary flex-1">Insert</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Core App State
+        const appState = {
+            docContext: { client: "", amount: "" },
+            history: [],
+            role: "admin",
+            startTime: Date.now(),
+            paymentStatus: false
+        };
+
+        let currentUser = null;
+
+        const DOM = {
+            canvas: document.getElementById('doc-canvas'),
+            ctxMenu: document.getElementById('context-menu'),
+            brainInputs: { c: document.getElementById('ctx-client'), a: document.getElementById('ctx-amount') }
+        };
+
+        window.onload = () => {
+            checkAuth(); 
+            setInterval(updateAnalytics, 5000);
+            saveVersion(); 
+            
+            document.addEventListener('mousedown', (e) => {
+                if (!DOM.ctxMenu.contains(e.target)) DOM.ctxMenu.style.display = 'none';
+            });
+            document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleCmdPalette(); }
+                if (e.key === 'Escape') closeModals();
+            });
+            DOM.canvas.addEventListener('input', debounce(evaluateMathFields, 800));
+        };
+
+        // --- AUTH & LIMITS ---
+        function checkAuth() {
+            try {
+                const stored = localStorage.getItem('omni_user');
+                if(stored) {
+                    currentUser = JSON.parse(stored);
+                    document.getElementById('auth-modal').style.display = 'none';
+                    document.getElementById('user-greeting').innerText = `Hi, ${currentUser.name.split(' ')[0]}`;
+                } else {
+                    document.getElementById('auth-modal').style.display = 'flex';
+                }
+            } catch(e) { document.getElementById('auth-modal').style.display = 'flex'; }
+        }
+
+        function handleLogin() {
+            const name = document.getElementById('auth-name').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+            if(!name) { alert("Please enter your name to continue."); return; }
+            const isAdmin = (name.toLowerCase() === 'vaidik' && pass === '1234@4321');
+            currentUser = { name: name, isAdmin: isAdmin };
+            try { localStorage.setItem('omni_user', JSON.stringify(currentUser)); } catch(e) {}
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('user-greeting').innerText = `Hi, ${currentUser.name.split(' ')[0]}`;
+        }
+
+        function checkAILimit() {
+            if (!currentUser) return false;
+            if (currentUser.isAdmin) return true;
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                let usage = JSON.parse(localStorage.getItem('omni_ai_usage') || '{"date":"","count":0}');
+                if (usage.date !== today) { usage = { date: today, count: 0 }; }
+                if (usage.count >= 3) {
+                    alert("You have reached your limit of 3 AI requests for today. Please try again tomorrow, or login as Admin.");
+                    return false;
+                }
+                usage.count++;
+                localStorage.setItem('omni_ai_usage', JSON.stringify(usage));
+                return true;
+            } catch (e) { return true; }
+        }
+
+        // --- NEW SECURE GEMINI INTEGRATION ---
+        async function askGemini(instruction, content, imageBase64 = null, panel = 'left') {
+            if (!checkAILimit()) return null;
+
+            const loader = document.getElementById(`loader-${panel}`);
+            if(loader) loader.classList.remove('hidden');
+            
+            let parts = [{ text: `INSTRUCTION: ${instruction}\nCONTEXT:\n${content}` }];
+            if (imageBase64) parts.push({ inlineData: { mimeType: "image/jpeg", data: imageBase64.split(',')[1] } });
+            
+            const payload = {
+                contents: [{ parts }],
+                systemInstruction: { parts: [{ text: "You are Omni-Architect Pro, an elite document generator. CRITICAL INSTRUCTION: Output ONLY raw HTML. Do NOT wrap your response in markdown code blocks (e.g., do NOT start with ```html). Do NOT use any markdown formatting whatsoever. Ensure professional, beautiful inline CSS styling. If asked for JSON, return raw JSON without markdown. Obey commands precisely and flawlessly." }] }
+            };
+
+            try {
+                // IMPORTANT: We now call our secure Vercel API, NOT Google directly!
+                const res = await fetch('/api/gemini', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                const data = await res.json();
+                if(loader) loader.classList.add('hidden');
+                
+                if(data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                
+                let textResult = data.candidates[0].content.parts[0].text;
+                textResult = textResult.replace(/^```html\s*/i, '').replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/g, '').trim();
+                return textResult;
+            } catch (e) { 
+                if(loader) loader.classList.add('hidden'); 
+                alert(`AI Error: ${e.message}`); return null; 
+            }
+        }
+
+        // --- AI FEATURES ---
+        async function runWorkflow(type) {
+            const prompt = document.getElementById('prompt-create').value;
+            if(!prompt) return;
+            closeMobilePanels(); 
+            let html = await askGemini(`Create a full document based on: "${prompt}". Use modern fonts, good padding, and variables in brackets like [Client Name]. Include a summary section.`, "", null, 'left');
+            if(html) {
+                DOM.canvas.innerHTML = html;
+                saveVersion();
+                setTimeout(runAudit, 1000);
+            }
+        }
+
+        async function aiAction(action) {
+            const promptStr = document.getElementById('prompt-edit').value.trim();
+            const content = DOM.canvas.innerHTML;
+            closeMobilePanels();
+            
+            if(action === 'design') {
+                let instruction = "Upgrade the design of this HTML. Make it look like a premium SaaS PDF export. Enhance typography, add subtle background colors to headers, improve table borders. Do NOT change the core text/data.";
+                if (promptStr) instruction += ` User specifically requests this modification: ${promptStr}`;
+
+                const html = await askGemini(instruction, content, null, 'right');
+                if(html) { 
+                    DOM.canvas.innerHTML = html; 
+                    saveVersion(); 
+                    document.getElementById('prompt-edit').value = ''; 
+                }
+            } else if (action === 'explain') {
+                const textContext = DOM.canvas.innerText;
+                let instruction = "Analyze this document. Provide a 3 bullet point summary of key terms/risks. Return as simple HTML snippet without markdown.";
+                if (promptStr) instruction += ` Focus specifically on analyzing this user query: ${promptStr}`;
+
+                const explanation = await askGemini(instruction, textContext, null, 'right');
+                if(explanation) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<div style="background:#f0fdf4; border-left:4px solid #22c55e; padding:15px; margin-top:20px; font-family:sans-serif; font-size:12px;"><strong>AI Analysis:</strong><br>${explanation}</div>`;
+                    DOM.canvas.appendChild(div);
+                    document.getElementById('prompt-edit').value = ''; 
+                }
+            }
+        }
+
+        function runAudit() {
+            closeMobilePanels();
+            let issuesFound = 0;
+            const regex = /\[(.*?)\]|TODO|XXXX/g;
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/<span class="audit-issue">(.*?)<\/span>/g, "$1");
+            let newHtml = DOM.canvas.innerHTML.replace(regex, (match) => {
+                issuesFound++;
+                return `<span class="audit-issue" title="Needs review">${match}</span>`;
+            });
+            if(issuesFound > 0) {
+                DOM.canvas.innerHTML = newHtml;
+                alert(`Audit Complete: Found ${issuesFound} missing fields or issues.`);
+            } else { alert("Audit Complete: Document looks clean!"); }
+        }
+
+        function forceCalculate() { evaluateMathFields(); }
+        function evaluateMathFields() {
+            let updated = false;
+            const mathRegex = /\[\[\s*([\d\.\+\-\*\/\(\)\s]+)\s*\]\]/g; 
+            const newHtml = DOM.canvas.innerHTML.replace(mathRegex, (match, expression) => {
+                try {
+                    const result = Function(`'use strict'; return (${expression})`)();
+                    updated = true;
+                    return `<span class="calc-field" data-expr="${expression}">$${result.toFixed(2)}</span>`;
+                } catch(e) { return match; }
+            });
+            if(updated) { DOM.canvas.innerHTML = newHtml; saveVersion(); }
+        }
+
+        function updateBrain() {
+            appState.docContext.client = DOM.brainInputs.c.value;
+            appState.docContext.amount = DOM.brainInputs.a.value;
+        }
+        function autofillDoc() {
+            let html = DOM.canvas.innerHTML;
+            if(appState.docContext.client) html = html.replace(/\[Client Name\]|\[Client\]/gi, appState.docContext.client);
+            if(appState.docContext.amount) html = html.replace(/\[Amount\]|\[Total\]/gi, `$${appState.docContext.amount}`);
+            DOM.canvas.innerHTML = html; saveVersion(); closeMobilePanels();
+        }
+
+        function saveVersion() {
+            if(appState.history.length > 0 && appState.history[appState.history.length-1] === DOM.canvas.innerHTML) return;
+            appState.history.push(DOM.canvas.innerHTML);
+            if(appState.history.length > 10) appState.history.shift(); 
+            document.getElementById('ver-count').innerText = appState.history.length;
+        }
+        function restoreLastVersion() {
+            if(appState.history.length > 1) {
+                appState.history.pop(); 
+                DOM.canvas.innerHTML = appState.history[appState.history.length - 1];
+                document.getElementById('ver-count').innerText = appState.history.length;
+            }
+        }
+
+        function updatePermissions() {
+            appState.role = document.getElementById('role-selector').value;
+            if(appState.role === 'viewer') {
+                DOM.canvas.classList.add('view-only'); DOM.canvas.contentEditable = "false";
+            } else {
+                DOM.canvas.classList.remove('view-only'); DOM.canvas.contentEditable = "true";
+            }
+        }
+        
+        let currentSelNode = null;
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            if(sel.rangeCount > 0 && sel.toString().trim().length > 0 && DOM.canvas.contains(sel.anchorNode)) {
+                currentSelNode = sel.getRangeAt(0).commonAncestorContainer;
+                if(currentSelNode.nodeType === 3) currentSelNode = currentSelNode.parentNode; 
+                const rect = sel.getRangeAt(0).getBoundingClientRect();
+                DOM.ctxMenu.style.display = 'flex';
+                DOM.ctxMenu.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 160)}px`;
+                DOM.ctxMenu.style.top = `${rect.bottom + window.scrollY + 8}px`;
+            } else { DOM.ctxMenu.style.display = 'none'; }
+        });
+
+        async function ctxExec(cmd) {
+            DOM.ctxMenu.style.display = 'none';
+            if(!currentSelNode) return;
+            if(cmd === 'lock') {
+                currentSelNode.contentEditable = "false"; currentSelNode.classList.add('locked-section'); saveVersion();
+            } else if (cmd === 'unlock') {
+                currentSelNode.contentEditable = "true"; currentSelNode.classList.remove('locked-section'); saveVersion();
+            } else if (cmd === 'rewrite' || cmd === 'summarize') {
+                const text = currentSelNode.innerText;
+                const prompt = cmd === 'rewrite' ? "Rewrite this professionally." : "Summarize this in one short sentence.";
+                const res = await askGemini(prompt, text, null, 'right');
+                if(res) { currentSelNode.innerHTML = res; saveVersion(); }
+            }
+        }
+
+        function handleAttachment(e) {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64 = event.target.result;
+                const html = await askGemini("Convert this image/document exactly into clean, semantic HTML preserving layout. Use tables if needed.", "", base64, 'left');
+                if(html) { DOM.canvas.innerHTML = html; saveVersion(); closeMobilePanels(); }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function generateSmartLink() {
+            const stateObj = { html: DOM.canvas.innerHTML, ctx: appState.docContext };
+            const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(stateObj))));
+            const mockUrl = `${window.location.origin}${window.location.pathname}?doc=${base64.substring(0,20)}...`;
+            prompt("Shareable Link Generated (Mocked via state encoded):", mockUrl);
+        }
+
+        function togglePaymentStatus() {
+            appState.paymentStatus = !appState.paymentStatus;
+            const el = document.getElementById('pay-status');
+            if(appState.paymentStatus) { el.innerText = "Paid"; el.className = "text-xs font-semibold text-emerald-500"; }
+            else { el.innerText = "Pending"; el.className = "text-xs font-semibold text-yellow-500"; }
+        }
+
+        function exportDoc(type) {
+            const content = DOM.canvas.innerText;
+            if(type === 'pdf') { html2pdf().set({ margin: [10, 10], filename: 'OmniDoc.pdf', jsPDF: { format: 'a4' } }).from(DOM.canvas).save(); } 
+            else if(type === 'wa') { window.open(`https://wa.me/?text=${encodeURIComponent("Please review this document:\n\n" + content.substring(0, 500) + "...")}`, '_blank'); } 
+            else if(type === 'email') { window.open(`mailto:?subject=Document Output&body=${encodeURIComponent(content.substring(0, 1000))}`, '_blank'); } 
+            else if(type === 'api') {
+                const jsonStr = JSON.stringify({ document: DOM.canvas.innerHTML, metadata: appState.docContext }, null, 2);
+                const w = window.open();
+                w.document.write(`<pre style="background:#000;color:#0f0;padding:20px;">${jsonStr.replace(/</g, '&lt;')}</pre>`);
+            }
+        }
+
+        const templates = {
+            invoice: `<div style="font-family:sans-serif; max-width:800px; margin:auto;"><div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:20px; margin-bottom:20px;"><div><h1 style="margin:0;">INVOICE</h1><p style="color:#666;">#INV-2026-001</p></div><div style="text-align:right;"><strong>Your Company Name</strong><br>123 Business Rd.</div></div><div style="margin-bottom:30px;"><strong>Billed To:</strong><br>[Client Name]<br>[Client Address]</div><table style="width:100%; border-collapse:collapse; margin-bottom:20px;"><tr style="background:#f4f4f5; text-align:left;"><th style="padding:10px; border-bottom:1px solid #ccc;">Description</th><th style="padding:10px; border-bottom:1px solid #ccc; text-align:right;">Amount</th></tr><tr><td style="padding:10px; border-bottom:1px solid #eee;">Consulting Services</td><td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">[Amount]</td></tr></table><div style="text-align:right; font-size:1.2em; margin-top:20px;"><strong>Total Due: <span style="color:#10b981;">[[ [Amount] * 1.0 ]]</span></strong></div></div>`,
+            contract: `<div style="font-family:serif; line-height:1.8; text-align:justify;"><h2 style="text-align:center; text-transform:uppercase;">Non-Disclosure Agreement</h2><p>This Agreement is entered into on <strong>[Date]</strong>, between <strong>[Your Company]</strong> and <strong>[Client Name]</strong>.</p><h3>1. Confidential Information</h3><p>The Receiving Party shall keep all information strictly confidential...</p><h3>2. Term</h3><p>This agreement shall remain in effect for a period of 2 years.</p><br><br><div style="display:flex; justify-content:space-between; margin-top:50px;"><div style="border-top:1px solid #000; width:40%; padding-top:10px;">Signature (Company)</div><div style="border-top:1px solid #000; width:40%; padding-top:10px;">Signature (Client)</div></div></div>`,
+            proposal: `<div style="font-family:sans-serif;"><div style="background:#09090b; color:white; padding:40px; border-radius:8px; margin-bottom:30px;"><h1>Project Proposal</h1><p style="font-size:1.2em; color:#a1a1aa;">Prepared for: [Client Name]</p></div><h2>Executive Summary</h2><p>We propose a comprehensive solution to streamline your operations...</p><h2>Investment</h2><table style="width:100%; border-collapse:collapse; margin-top:20px;"><tr style="background:#f4f4f5;"><th style="padding:10px; text-align:left;">Phase</th><th style="padding:10px; text-align:right;">Cost</th></tr><tr><td style="padding:10px; border-bottom:1px solid #eee;">Phase 1: Design</td><td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$5,000</td></tr><tr><td style="padding:10px; border-bottom:1px solid #eee;">Phase 2: Development</td><td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$10,000</td></tr></table></div>`,
+            receipt: `<div style="font-family:monospace; max-width:400px; margin:auto; border:1px dashed #ccc; padding:20px; text-align:center;"><h2>CASH RECEIPT</h2><p>Date: [Date]</p><p>Received from: [Client Name]</p><p style="font-size:2em; font-weight:bold; margin:20px 0;">[Amount]</p><p>For: Services Rendered</p><br><p>Thank You!</p></div>`
+        };
+        function loadTemplate(key) { DOM.canvas.innerHTML = templates[key]; saveVersion(); closeMobilePanels(); runAudit(); }
+
+        function updateAnalytics() {
+            const words = DOM.canvas.innerText.trim().split(/\s+/).filter(w => w.length > 0).length;
+            document.getElementById('stat-words').innerText = words;
+            const minutes = Math.floor((Date.now() - appState.startTime) / 60000);
+            document.getElementById('stat-time').innerText = minutes + 'm';
+        }
+
+        function toggleCmdPalette() {
+            const el = document.getElementById('cmd-palette'); el.classList.toggle('active');
+            if(el.classList.contains('active')) { setTimeout(() => document.getElementById('cmd-input').focus(), 100); }
+        }
+        function closeModals() {
+            document.getElementById('cmd-palette').classList.remove('active');
+            document.getElementById('sig-modal').classList.add('hidden');
+            document.getElementById('sig-modal').classList.remove('flex');
+        }
+        async function executeCmd(cmd) {
+            closeModals();
+            if(cmd === 'audit') runAudit(); if(cmd === 'export_pdf') exportDoc('pdf'); if(cmd === 'invoice') loadTemplate('invoice');
+        }
+        document.getElementById('cmd-input').addEventListener('keypress', async (e) => {
+            if(e.key === 'Enter') {
+                const req = e.target.value; closeModals();
+                const html = await askGemini(`Generate HTML for: ${req}`, "", null, 'left');
+                if(html) { DOM.canvas.innerHTML = html; saveVersion(); } e.target.value = '';
+            }
+        });
+
+        // --- SIGNATURE ---
+        const sigCanvas = document.getElementById('sig-canvas'); const sigCtx = sigCanvas.getContext('2d'); let isDrawing = false;
+        sigCanvas.addEventListener('mousedown', startPos); sigCanvas.addEventListener('touchstart', startPos);
+        sigCanvas.addEventListener('mouseup', endPos); sigCanvas.addEventListener('touchend', endPos);
+        sigCanvas.addEventListener('mousemove', draw); sigCanvas.addEventListener('touchmove', draw);
+        function startPos(e) { isDrawing = true; draw(e); } function endPos() { isDrawing = false; sigCtx.beginPath(); }
+        function draw(e) {
+            if(!isDrawing) return; e.preventDefault(); 
+            const rect = sigCanvas.getBoundingClientRect(); const clientX = e.clientX || e.touches[0].clientX; const clientY = e.clientY || e.touches[0].clientY;
+            sigCtx.lineWidth = 2; sigCtx.lineCap = 'round'; sigCtx.strokeStyle = '#000';
+            sigCtx.lineTo(clientX - rect.left, clientY - rect.top); sigCtx.stroke(); sigCtx.beginPath(); sigCtx.moveTo(clientX - rect.left, clientY - rect.top);
+        }
+        function clearSignature() { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
+        function openSignature() {
+            closeMobilePanels(); document.getElementById('sig-modal').classList.remove('hidden'); document.getElementById('sig-modal').classList.add('flex');
+            setTimeout(() => { const rect = sigCanvas.parentElement.getBoundingClientRect(); sigCanvas.width = rect.width - 32; }, 100);
+        }
+        function saveSignature() {
+            const dataUrl = sigCanvas.getContext('2d').canvas.toDataURL();
+            const img = document.createElement('img'); img.src = dataUrl; img.style.maxHeight = '80px'; img.style.borderBottom = '1px solid #000'; img.style.display = 'block';
+            if(window.getSelection().rangeCount > 0 && DOM.canvas.contains(window.getSelection().anchorNode)) { window.getSelection().getRangeAt(0).insertNode(img); } 
+            else { DOM.canvas.appendChild(img); }
+            closeModals(); saveVersion(); clearSignature();
+        }
+
+        // --- UI ---
+        function toggleMobilePanel(id) {
+            const panel = document.getElementById(id); const otherPanelId = id === 'sidebar-left' ? 'sidebar-right' : 'sidebar-left';
+            document.getElementById(otherPanelId).classList.remove('open'); panel.classList.toggle('open');
+        }
+        function closeMobilePanels() { document.getElementById('sidebar-left').classList.remove('open'); document.getElementById('sidebar-right').classList.remove('open'); }
+        function debounce(func, wait) { let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
+        function handleTyping() { saveVersion(); }
+    </script>
+</body>
+</html>
+
+
