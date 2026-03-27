@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NovaDraft AI | Intelligent Document & Contract OS</title>
+    <meta name="description" content="NovaDraft AI: The world's first SaaS OS with built-in AI workflows, regional compliance audits, voice-to-doc, and dynamic logic variables. [3 free uses per day]">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           THEME ENGINE: CSS VARIABLES
+           ========================================= */
+        :root {
+            /* Midnight Indigo (Default Dark) */
+            --bg-main: #09090b; --bg-panel: #18181b; --bg-header: rgba(9, 9, 11, 0.95);
+            --border: #27272a; --text-main: #f4f4f5; --text-muted: #a1a1aa;
+            --accent: #6366f1; --accent-hover: #4f46e5; --canvas-bg: #ffffff;
+            --sidebar-width: 340px; --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.2);
+        }
+
+        [data-theme="light-minimal"] {
+            /* Nordic Clean */
+            --bg-main: #f3f4f6; --bg-panel: #ffffff; --bg-header: rgba(255, 255, 255, 0.95);
+            --border: #e5e7eb; --text-main: #111827; --text-muted: #6b7280;
+            --accent: #000000; --accent-hover: #374151; --canvas-bg: #ffffff;
+            --shadow-glow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="midnight-gold"] {
+            /* Luxury Legal */
+            --bg-main: #000000; --bg-panel: #0a0a0a; --bg-header: rgba(0, 0, 0, 0.95);
+            --border: #262626; --text-main: #fafafa; --text-muted: #a3a3a3;
+            --accent: #d97706; --accent-hover: #b45309; --canvas-bg: #fffdf5;
+            --shadow-glow: 0 0 30px rgba(217, 119, 6, 0.15);
+        }
+
+        /* =========================================
+           GLOBAL STYLES & ANIMATIONS
+           ========================================= */
+        body { font-family: 'Inter', sans-serif; overflow: hidden; overscroll-behavior-y: none; background-color: var(--bg-main); color: var(--text-main); }
+        .theme-bg-main { background-color: var(--bg-main); color: var(--text-main); transition: all 0.3s ease; }
+        .theme-bg-panel { background-color: var(--bg-panel); transition: all 0.3s ease; }
+        .theme-bg-header { background-color: var(--bg-header); backdrop-filter: blur(12px); }
+        .theme-border { border-color: var(--border); }
+        .theme-text-main { color: var(--text-main); }
+        .theme-text-muted { color: var(--text-muted); }
+        .theme-accent { color: var(--accent); }
+        .theme-accent-bg { background-color: var(--accent); color: #fff; box-shadow: var(--shadow-glow); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+
+        /* =========================================
+           MULTI-PAGE CANVAS & VISUAL MODES
+           ========================================= */
+        .canvas-wrapper { 
+            background-color: var(--bg-main); 
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 24px 24px; overflow-y: auto; height: calc(100vh - 64px); 
+            scroll-behavior: smooth; position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 2rem; padding-bottom: 4rem; gap: 2rem;
+        }
+
+        /* WPS Style Page Breaks */
+        .doc-page { 
+            width: 210mm; min-height: 297mm; background: var(--canvas-bg); color: #171717; 
+            padding: 20mm; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+            border-radius: 4px; outline: none; position: relative; line-height: 1.6;
+            flex-shrink: 0;
+        }
+
+        .doc-page::after {
+            content: 'Page Break'; position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%);
+            font-size: 10px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; pointer-events: none;
+        }
+        .doc-page:last-child::after { content: ''; }
+
+        /* Presentation Mode */
+        .canvas-wrapper.mode-ppt { flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 2rem; gap: 2rem; }
+        .canvas-wrapper.mode-ppt .doc-page {
+            width: 960px; min-height: 540px; aspect-ratio: 16/9; padding: 40px; border-radius: 12px;
+            font-size: 1.5rem; display: flex; flex-direction: column; justify-content: center;
+        }
+
+        /* Components */
+        .calc-field { background: rgba(16, 185, 129, 0.1); border-bottom: 2px dashed #10b981; padding: 2px 6px; border-radius: 4px; }
+        .smart-field { background: rgba(99, 102, 241, 0.1); border-bottom: 2px dashed var(--accent); padding: 2px 6px; border-radius: 4px; }
+        .locked-section { border: 1px solid #ef4444; position: relative; background: rgba(239,68,68,0.02); }
+        .ai-guardrail { background: rgba(234, 179, 8, 0.2); border-bottom: 2px wavy #eab308; cursor: help; }
+
+        /* UI Elements */
+        .theme-input { background-color: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; padding: 12px 16px; font-size: 0.875rem; transition: all 0.2s; outline: none; width: 100%; }
+        .theme-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        .btn { background-color: var(--bg-panel); border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; padding: 10px 16px; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+        .btn:hover { border-color: var(--accent); }
+        .btn-primary { background-color: var(--accent); color: white; border-color: var(--accent-hover); box-shadow: var(--shadow-glow); }
+        .btn-primary:hover { background-color: var(--accent-hover); transform: translateY(-1px); }
+
+        .modal-bg { background: rgba(0,0,0,0.85); backdrop-filter: blur(16px); }
+        .glass-panel { background: rgba(24, 24, 27, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); } 50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.5); } }
+    </style>
+</head>
+<body class="theme-bg-main flex flex-col h-screen text-sm">
+
+    <div id="auth-modal" class="fixed inset-0 modal-bg z-[9999] hidden flex-col items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-md shadow-2xl relative overflow-hidden fade-in">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
+            
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-14 h-14 rounded-2xl theme-accent-bg flex items-center justify-center shadow-lg"><i data-lucide="layers" class="w-8 h-8 text-white"></i></div>
+                <div>
+                    <h2 class="theme-text-main text-3xl font-extrabold tracking-tight">NovaDraft <span class="theme-accent">AI</span></h2>
+                    <p class="theme-text-muted text-[10px] font-bold tracking-widest uppercase mt-1">Smart Document OS</p>
+                </div>
+            </div>
+            
+            <div class="mb-6 p-4 rounded-xl bg-black/30 border border-white/5">
+                <p class="text-xs theme-text-muted leading-relaxed">
+                    Welcome to the next generation of productivity. Free users get 3 AI generative calls daily. Admins receive infinite access.
+                </p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase tracking-wider font-bold mb-2 block">Create Alias / Name</label>
+                    <input type="text" id="auth-name" placeholder="e.g. Vaidik" class="theme-input py-3">
+                </div>
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase tracking-wider font-bold mb-2 block flex justify-between">
+                        <span>Master Password</span>
+                        <span class="text-emerald-500 font-normal">Optional</span>
+                    </label>
+                    <input type="password" id="auth-pass" placeholder="Leave blank for public access" class="theme-input py-3">
+                </div>
+                <button onclick="handleInitialLogin()" class="w-full btn btn-primary py-3.5 mt-4 text-sm font-bold tracking-wide rounded-xl">Initialize OS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="unlock-modal" class="fixed inset-0 modal-bg z-[9999] hidden flex-col items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-sm shadow-2xl relative overflow-hidden fade-in text-center">
+            <div class="w-16 h-16 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto mb-4 border border-indigo-500/20"><i data-lucide="lock" class="w-8 h-8"></i></div>
+            <h2 class="theme-text-main text-2xl font-bold tracking-tight mb-2" id="unlock-greeting">Welcome Back</h2>
+            <p class="theme-text-muted text-xs mb-8">This workspace is encrypted. Please enter your password to resume session.</p>
+            
+            <input type="password" id="unlock-pass" placeholder="••••••••" class="theme-input py-3 text-center text-lg tracking-widest mb-4">
+            <button onclick="handleUnlock()" class="w-full btn btn-primary py-3 font-bold rounded-xl mb-3">Unlock Workspace</button>
+            <button onclick="resetAccount()" class="text-[10px] theme-text-muted hover:text-red-400 transition underline">Reset Account (Deletes Local Data)</button>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="fixed inset-0 theme-bg-main z-50 flex flex-col overflow-y-auto hidden">
+        <header class="h-20 flex justify-between items-center px-8 border-b theme-border theme-bg-header sticky top-0 z-40">
+            <div class="font-bold text-2xl tracking-tight flex items-center gap-3 theme-text-main">
+                <div class="w-8 h-8 rounded-lg theme-accent-bg flex items-center justify-center"><i data-lucide="layers" class="w-4 h-4 text-white"></i></div>
+                NOVA<span class="theme-accent">DRAFT</span> 
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-xs theme-text-muted bg-black/20 px-3 py-1.5 rounded-full border theme-border"><span id="dash-ai-tokens" class="font-bold text-emerald-400">3</span> AI Tokens Left</span>
+                <button onclick="openSettings()" class="btn border-transparent hover:bg-white/5"><i data-lucide="settings" class="w-4 h-4"></i></button>
+            </div>
+        </header>
+
+        <div class="max-w-6xl mx-auto w-full p-8 pt-12 space-y-12">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="text-4xl font-extrabold theme-text-main mb-2">Good afternoon, <span id="dash-name" class="theme-accent">Creator</span>.</h1>
+                    <p class="theme-text-muted">What are we building today?</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onclick="openCreationModal()" class="glass-panel rounded-2xl p-8 cursor-pointer group hover:border-indigo-500/50 transition-all duration-300" style="animation: pulse-glow 4s infinite;">
+                    <div class="w-14 h-14 rounded-full theme-accent-bg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="plus" class="w-6 h-6 text-white"></i></div>
+                    <h3 class="text-xl font-bold theme-text-main mb-2">Create New...</h3>
+                    <p class="text-sm theme-text-muted">Start a blank Document, Presentation, or Smart PDF.</p>
+                </div>
+
+                <div onclick="openCreationModal('template')" class="theme-bg-panel border theme-border rounded-2xl p-8 cursor-pointer hover:border-white/20 transition-all duration-300">
+                    <div class="w-14 h-14 rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20 flex items-center justify-center mb-6"><i data-lucide="layout-template" class="w-6 h-6"></i></div>
+                    <h3 class="text-xl font-bold theme-text-main mb-2">Template Library</h3>
+                    <p class="text-sm theme-text-muted">Load an NDA, Invoice, or Custom saved template.</p>
+                </div>
+
+                <div class="theme-bg-panel border theme-border rounded-2xl p-8 flex flex-col justify-center">
+                    <h4 class="text-xs font-bold theme-text-muted uppercase tracking-widest mb-6">OS Analytics</h4>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center"><span class="text-sm theme-text-muted">Docs Generated</span> <span class="font-bold text-lg theme-text-main" id="stat-total-docs">0</span></div>
+                        <div class="flex justify-between items-center"><span class="text-sm theme-text-muted">Time Saved (AI)</span> <span class="font-bold text-lg text-emerald-400" id="stat-total-time">0h</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold theme-text-main mb-4 flex items-center gap-2"><i data-lucide="clock" class="w-5 h-5 theme-text-muted"></i> Recent Activity</h3>
+                <div class="border theme-border rounded-2xl overflow-hidden theme-bg-panel">
+                    <div class="p-6 text-center text-sm theme-text-muted">No recent documents found in local memory. Create one to begin.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="creation-modal" class="fixed inset-0 modal-bg z-[100] hidden items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-2xl shadow-2xl fade-in">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold theme-text-main">Choose Format</h2>
+                <button onclick="closeModals()" class="text-zinc-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="initEditor('doc')" class="flex flex-col items-center p-6 border theme-border rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-left">
+                    <i data-lucide="file-text" class="w-10 h-10 text-blue-400 mb-4"></i>
+                    <h3 class="font-bold theme-text-main mb-1">Standard Document</h3>
+                    <p class="text-xs theme-text-muted text-center">Continuous A4 scroll. Best for contracts and letters.</p>
+                </button>
+                
+                <button onclick="initEditor('pdf')" class="flex flex-col items-center p-6 border theme-border rounded-2xl hover:border-emerald-500 hover:bg-emerald-500/5 transition-all text-left">
+                    <i data-lucide="copy" class="w-10 h-10 text-emerald-400 mb-4"></i>
+                    <h3 class="font-bold theme-text-main mb-1">Multi-Page PDF</h3>
+                    <p class="text-xs theme-text-muted text-center">Visible page breaks (WPS style). Perfect for exporting.</p>
+                </button>
+
+                <button onclick="initEditor('ppt')" class="flex flex-col items-center p-6 border theme-border rounded-2xl hover:border-orange-500 hover:bg-orange-500/5 transition-all text-left">
+                    <i data-lucide="projector" class="w-10 h-10 text-orange-400 mb-4"></i>
+                    <h3 class="font-bold theme-text-main mb-1">Presentation</h3>
+                    <p class="text-xs theme-text-muted text-center">16:9 Slide Canvas. Ideal for pitch decks and reports.</p>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- THEME ENGINE ---
+        function changeTheme(themeName) {
+            if(themeName === 'default') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', themeName);
+            }
+            try { localStorage.setItem('novadraft_theme', themeName); } catch(e) {}
+            document.getElementById('ui-theme-selector').value = themeName;
+        }
+
+        // --- CORE STATE ---
+        const appState = {
+            docContext: { client: "", amount: "", date: new Date().toLocaleDateString() },
+            shadowContext: {}, 
+            history: [],
+            role: "admin",
+            startTime: Date.now(),
+            paymentStatus: false,
+            docsGenerated: 0
+        };
+
+        let currentUser = null;
+        let companyDNA = {};
+
+        const DOM = {
+            canvas: document.getElementById('doc-canvas'),
+            ctxMenu: document.getElementById('context-menu'),
+            slashMenu: document.getElementById('slash-menu'),
+            brainInputs: { 
+                c: document.getElementById('ctx-client'), 
+                a: document.getElementById('ctx-amount'),
+                d: document.getElementById('ctx-date')
+            }
+        };
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            // Load Theme
+            const savedTheme = localStorage.getItem('novadraft_theme');
+            if (savedTheme) changeTheme(savedTheme);
+
+            // Load DNA Profile
+            const savedDNA = localStorage.getItem('novadraft_dna');
+            if (savedDNA) companyDNA = JSON.parse(savedDNA);
+
+            // Load Stats
+            appState.docsGenerated = parseInt(localStorage.getItem('novadraft_docs_count') || '0');
+
+            checkAuth(); 
+            setInterval(updateAnalytics, 5000);
+            saveVersion(); 
+            renderSavedTemplates();
+            
+            // Event Listeners for Menus
+            document.addEventListener('mousedown', (e) => {
+                if (!DOM.ctxMenu.contains(e.target)) DOM.ctxMenu.style.display = 'none';
+                if (!DOM.slashMenu.contains(e.target) && e.target.id !== 'doc-canvas') DOM.slashMenu.style.display = 'none';
+            });
+            document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleCmdPalette(); }
+                if (e.key === 'Escape') closeModals();
+            });
+            
+            // Slash Command Listener
+            DOM.canvas.addEventListener('keyup', (e) => {
+                const sel = window.getSelection();
+                if(sel.focusNode && sel.focusNode.textContent.endsWith('/')) {
+                    const rect = sel.getRangeAt(0).getBoundingClientRect();
+                    DOM.slashMenu.style.display = 'flex';
+                    DOM.slashMenu.style.left = `${Math.min(rect.left, window.innerWidth - 250)}px`;
+                    DOM.slashMenu.style.top = `${rect.bottom + 5}px`;
+                } else if (e.key !== 'Shift') {
+                    DOM.slashMenu.style.display = 'none';
+                }
+            });
+
+            DOM.canvas.addEventListener('input', debounce(evaluateMathFields, 800));
+        };
+
+        // --- AUTHENTICATION & ENCRYPTION SYSTEM ---
+        function checkAuth() {
+            try {
+                const stored = localStorage.getItem('novadraft_user');
+                if(stored) {
+                    currentUser = JSON.parse(stored);
+                    if(currentUser.password) {
+                        document.getElementById('unlock-modal').style.display = 'flex';
+                        document.getElementById('unlock-greeting').innerText = `Welcome Back, ${currentUser.name.split(' ')[0]}`;
+                    } else {
+                        showDashboard();
+                    }
+                } else {
+                    document.getElementById('auth-modal').style.display = 'flex';
+                }
+            } catch(e) { document.getElementById('auth-modal').style.display = 'flex'; }
+        }
+
+        function handleInitialLogin() {
+            const name = document.getElementById('auth-name').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+            if(!name) { alert("Please enter your name to initialize the OS."); return; }
+            
+            // Vaidik Super-Admin logic
+            const isAdmin = (name.toLowerCase() === 'vaidik' && pass === '1234@4321');
+            currentUser = { name: name, password: pass, isAdmin: isAdmin };
+            
+            try { localStorage.setItem('novadraft_user', JSON.stringify(currentUser)); } catch(e) {}
+            document.getElementById('auth-modal').style.display = 'none';
+            showDashboard();
+        }
+
+        function handleUnlock() {
+            const pass = document.getElementById('unlock-pass').value;
+            if(pass === currentUser.password) {
+                document.getElementById('unlock-modal').style.display = 'none';
+                showDashboard();
+            } else {
+                alert("Access Denied: Incorrect Password.");
+            }
+        }
+
+        function resetAccount() {
+            if(confirm("DANGER: This will permanently delete your profile, saved templates, and history. Proceed?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dash-name').innerText = currentUser.name.split(' ')[0];
+            document.getElementById('user-greeting').innerText = currentUser.name;
+            updateDashboardStats();
+        }
+
+        function updateDashboardStats() {
+            document.getElementById('stat-total-docs').innerText = appState.docsGenerated;
+            let usage = JSON.parse(localStorage.getItem('novadraft_ai') || '{"count":0}');
+            let tokensLeft = currentUser.isAdmin ? "∞" : Math.max(0, 3 - usage.count);
+            document.getElementById('dash-ai-tokens').innerText = tokensLeft;
+        }
+
+        // --- DASHBOARD & MODAL NAVIGATION ---
+        function openCreationModal(type = 'new') {
+            if(type === 'template') switchTab('left', 'tab-templates');
+            document.getElementById('creation-modal').style.display = 'flex';
+        }
+
+        function initEditor(mode) {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('creation-modal').style.display = 'none';
+            changeCanvasMode(mode);
+            document.getElementById('canvas-mode-selector').value = mode;
+            
+            // Track doc creation
+            appState.docsGenerated++;
+            localStorage.setItem('novadraft_docs_count', appState.docsGenerated.toString());
+            appState.startTime = Date.now();
+        }
+
+        function changeCanvasMode(mode) {
+            DOM.canvas.className = ''; // Reset classes
+            if(mode === 'ppt') {
+                DOM.canvas.classList.add('mode-presentation');
+                DOM.canvas.parentElement.classList.add('mode-ppt');
+            } else if (mode === 'pdf') {
+                DOM.canvas.classList.add('doc-page');
+                DOM.canvas.parentElement.classList.remove('mode-ppt');
+            } else {
+                DOM.canvas.classList.add('mode-document');
+                DOM.canvas.parentElement.classList.remove('mode-ppt');
+            }
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none');
+            document.getElementById('auth-modal').style.display = currentUser ? 'none' : 'flex';
+        }
+
+        function switchTab(side, tabId) {
+            const container = document.getElementById(`sidebar-${side}`);
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // --- PROFILE DNA SETTINGS ---
+        function openProfile() {
+            document.getElementById('prof-company').value = companyDNA.company || "";
+            document.getElementById('prof-gst').value = companyDNA.gst || "";
+            document.getElementById('prof-address').value = companyDNA.address || "";
+            document.getElementById('prof-tone').value = companyDNA.tone || "";
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function saveProfileDNA() {
+            companyDNA = {
+                company: document.getElementById('prof-company').value,
+                gst: document.getElementById('prof-gst').value,
+                address: document.getElementById('prof-address').value,
+                tone: document.getElementById('prof-tone').value
+            };
+            localStorage.setItem('novadraft_dna', JSON.stringify(companyDNA));
+            closeModals();
+            alert("Company DNA Profile Saved. AI will now adapt to your brand.");
+        }
+
+        // --- AI USAGE LIMITS ---
+        function checkAILimit() {
+            if (!currentUser) return false;
+            if (currentUser.isAdmin) return true;
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                let usage = JSON.parse(localStorage.getItem('novadraft_ai') || '{"date":"","count":0}');
+                if (usage.date !== today) { usage = { date: today, count: 0 }; }
+                if (usage.count >= 3) {
+                    alert("AI Limit Reached (3/Day). Please return tomorrow or upgrade your account.");
+                    return false;
+                }
+                usage.count++;
+                localStorage.setItem('novadraft_ai', JSON.stringify(usage));
+                updateDashboardStats();
+                return true;
+            } catch (e) { return true; }
+        }
+
+        // --- SECURE GEMINI INTEGRATION ---
+        async function askGemini(instruction, content, imageBase64 = null, panel = 'left') {
+            if (!checkAILimit()) return null;
+
+            const loader = document.getElementById(`loader-${panel}`);
+            if(loader) loader.classList.remove('hidden');
+            
+            // Inject Company DNA Context
+            let dnaContext = companyDNA.company ? `\nCOMPANY DNA (Use this data if relevant): Name: ${companyDNA.company}, GST: ${companyDNA.gst}, Tone: ${companyDNA.tone}` : "";
+            
+            let parts = [{ text: `INSTRUCTION: ${instruction}${dnaContext}\nCONTEXT:\n${content}` }];
+            if (imageBase64) parts.push({ inlineData: { mimeType: "image/jpeg", data: imageBase64.split(',')[1] } });
+            
+            const payload = {
+                contents: [{ parts }],
+                systemInstruction: { parts: [{ text: "You are NovaDraft AI, an elite SaaS document generator. CRITICAL INSTRUCTION: Output ONLY raw HTML. Do NOT wrap your response in markdown code blocks (no ```html). Ensure professional, beautiful inline CSS styling. Obey commands precisely." }] }
+            };
+
+            try {
+                const res = await fetch('/api/gemini', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                const data = await res.json();
+                if(loader) loader.classList.add('hidden');
+                if(data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                
+                let textResult = data.candidates[0].content.parts[0].text;
+                textResult = textResult.replace(/^```html\s*/i, '').replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/g, '').trim();
+                return textResult;
+            } catch (e) { 
+                if(loader) loader.classList.add('hidden'); 
+                alert(`AI Generation Error: ${e.message}`); return null; 
+            }
+        }
+
+        // --- AI FEATURES ---
+        async function runWorkflow(type) {
+            const prompt = document.getElementById('prompt-create').value;
+            if(!prompt) return;
+            closeMobilePanels(); 
+            let html = await askGemini(`Draft a highly professional document based on this request: "${prompt}". Use modern fonts, extensive padding, and variables in brackets like [Client Name]. If applicable, include a structured table.`, "", null, 'left');
+            if(html) {
+                DOM.canvas.innerHTML = html;
+                saveVersion();
+                setTimeout(runAudit, 1000);
+            }
+        }
+
+        async function autoImproveDoc() {
+            const content = DOM.canvas.innerHTML;
+            alert("AI Auto-Improve Loop Started. This will restructure and beautify the document.");
+            const html = await askGemini("Make this document perfect. 1. Fix structure. 2. Improve wording professionally. 3. Add any missing standard sections. 4. Beautify the UI with inline CSS. DO NOT change the core variables or math tags.", content, null, 'left');
+            if(html) { DOM.canvas.innerHTML = html; saveVersion(); }
+        }
+
+        async function aiAction(action) {
+            const promptStr = document.getElementById('prompt-edit').value.trim();
+            const content = DOM.canvas.innerHTML;
+            closeMobilePanels();
+            
+            if(action === 'design') {
+                let instruction = "Upgrade the design of this HTML. Make it look like a premium SaaS export. Enhance typography and table borders. DO NOT change text or math logic.";
+                if (promptStr) instruction += ` Custom User Request: ${promptStr}`;
+                const html = await askGemini(instruction, content, null, 'right');
+                if(html) { DOM.canvas.innerHTML = html; saveVersion(); document.getElementById('prompt-edit').value = ''; }
+            } 
+            else if (action === 'explain') {
+                let instruction = "Provide a 3 bullet point summary of key terms/risks. Return as simple HTML snippet.";
+                if (promptStr) instruction += ` Focus specifically on: ${promptStr}`;
+                const explanation = await askGemini(instruction, DOM.canvas.innerText, null, 'right');
+                if(explanation) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<div style="background:#f0fdf4; border-left:4px solid #22c55e; padding:15px; margin-top:20px; font-family:sans-serif; font-size:12px; color:#171717;"><strong>AI Analysis:</strong><br>${explanation}</div>`;
+                    DOM.canvas.appendChild(div);
+                }
+            }
+            else if (action.startsWith('clause_')) {
+                let clauseType = action.split('_')[1];
+                let prompt = clauseType === 'terminate' ? "Write a standard professional termination clause." :
+                             clauseType === 'gst' ? "Write a standard clause regarding Indian GST payment responsibility." :
+                             "Write a strict late payment penalty clause.";
+                const html = await askGemini(prompt + " Return only the raw HTML snippet.", "", null, 'right');
+                if(html) { DOM.canvas.innerHTML += `<br><br>${html}`; saveVersion(); }
+            }
+        }
+
+        // --- VOICE RECOGNITION ---
+        let recognition;
+        function toggleVoice() {
+            const btn = document.getElementById('mic-btn');
+            if(!('webkitSpeechRecognition' in window)) { alert("Voice API not supported in this browser."); return; }
+            
+            if(!recognition) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.onstart = function() { btn.classList.add('text-red-500', 'animate-pulse'); };
+                recognition.onend = function() { btn.classList.remove('text-red-500', 'animate-pulse'); };
+                recognition.onresult = function(event) {
+                    const text = event.results[0][0].transcript;
+                    const input = document.getElementById('prompt-create');
+                    input.value = input.value ? input.value + " " + text : text;
+                };
+            }
+            recognition.start();
+        }
+
+        // --- SLASH COMMANDS & BLOCKS ---
+        function insertBlock(type) {
+            DOM.slashMenu.style.display = 'none';
+            // Remove the trailing '/' the user typed
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/\/\s*$/, '');
+            
+            let html = "";
+            if(type === 'h2') html = `<h2 style="font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem;">New Section</h2><p>Start typing here...</p>`;
+            if(type === 'table') html = `<table style="width:100%; border-collapse:collapse; margin: 20px 0;"><tr style="background:#f4f4f5; color:black;"><th style="padding:10px; border:1px solid #e5e5e5;">Header 1</th><th style="padding:10px; border:1px solid #e5e5e5;">Header 2</th></tr><tr><td style="padding:10px; border:1px solid #e5e5e5; color:black;">Data</td><td style="padding:10px; border:1px solid #e5e5e5; color:black;">Data</td></tr></table><p><br></p>`;
+            if(type === 'pricing') html = `<div style="border: 2px solid #6366f1; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;"><h3 style="margin:0; color:#6366f1;">Premium Tier</h3><p style="font-size: 2rem; font-weight: bold; margin: 10px 0;">[[ [Amount] * 1.0 ]]</p><p style="color: #666;">Includes all premium features.</p></div><p><br></p>`;
+            if(type === 'sign') html = `<div style="display:flex; justify-content:space-between; margin-top:50px;"><div style="border-top:1px solid #000; width:40%; padding-top:10px;">Signature (Client)</div></div><p><br></p>`;
+            if(type === 'chart') html = `<div style="background:#f8fafc; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 4px; font-family: monospace;"><strong>📈 KPI Tracker</strong><br>Target: 100% | Current: 85%<br><div style="width:100%; background:#e2e8f0; height:10px; margin-top:5px; border-radius:5px;"><div style="width:85%; background:#3b82f6; height:10px; border-radius:5px;"></div></div></div><p><br></p>`;
+
+            // Simple append for robustness (A perfect implementation uses Range insertion)
+            DOM.canvas.innerHTML += html;
+            saveVersion();
+        }
+
+        // --- MATH ENGINE (V2 WITH CONDITIONALS) ---
+        function forceCalculate() { evaluateMathFields(); }
+        function evaluateMathFields() {
+            let updated = false;
+            // Matches [[ ... ]]
+            const mathBlockRegex = /\[\[(.*?)\]\]/g; 
+            const activeContext = appState.role === 'viewer' ? {...appState.docContext, ...appState.shadowContext} : appState.docContext;
+
+            let newHtml = DOM.canvas.innerHTML.replace(mathBlockRegex, (match, mathContent) => {
+                try {
+                    // Replace variables like [Amount]
+                    let expressionToEval = mathContent.replace(/\[([A-Za-z0-9_ ]+)\]/g, (varMatch, varName) => {
+                        let val = activeContext[varName.toLowerCase()] || activeContext[varName] || "0";
+                        return val.toString().replace(/[^0-9.-]+/g,"");
+                    });
+                    
+                    // Strip hidden HTML tags
+                    expressionToEval = expressionToEval.replace(/<[^>]*>?/gm, '');
+
+                    // Handle IF/THEN/ELSE Logic (Convert to JS Ternary)
+                    // Example: IF 5000 > 1000 THEN 5000 * 0.9 ELSE 5000
+                    if (expressionToEval.includes('IF ') && expressionToEval.includes('THEN ')) {
+                        expressionToEval = expressionToEval.replace(/IF /g, '')
+                                                         .replace(/ THEN /g, ' ? ')
+                                                         .replace(/ ELSE /g, ' : ');
+                    }
+
+                    const result = Function(`'use strict'; return (${expressionToEval})`)();
+                    
+                    if (!isNaN(result) && result !== undefined) {
+                        updated = true;
+                        const cssClass = appState.role === 'viewer' ? 'smart-field' : 'calc-field';
+                        return `<span class="${cssClass}" data-expr="${mathContent}">$${Number(result).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                    }
+                    return match; 
+                } catch(e) { return match; }
+            });
+
+            if(updated && appState.role !== 'viewer') { 
+                DOM.canvas.innerHTML = newHtml; saveVersion(); 
+            } else if (updated && appState.role === 'viewer') {
+                DOM.canvas.innerHTML = newHtml; // Show simulation, don't save
+            }
+        }
+
+        // --- AUDIT & COMPLIANCE ---
+        function runAudit() {
+            closeMobilePanels();
+            let issuesFound = 0;
+            const regex = /\[(.*?)\]|TODO|XXXX/g;
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/<span class="audit-issue">(.*?)<\/span>/g, "$1");
+            let newHtml = DOM.canvas.innerHTML.replace(regex, (match) => {
+                if(match.startsWith('[[') || match.includes('Live_')) return match; 
+                issuesFound++;
+                return `<span class="audit-issue" title="Needs review">${match}</span>`;
+            });
+            if(issuesFound > 0) {
+                DOM.canvas.innerHTML = newHtml;
+                alert(`Audit Complete: Found ${issuesFound} missing placeholders/issues.`);
+            } else { alert("Audit Complete: Document structure is clean."); }
+        }
+
+        async function runAIGuardrails() {
+            const textContext = DOM.canvas.innerText;
+            alert("Running Deep AI Compliance Check...");
+            const instruction = `Review this document for missing standard corporate legal clauses (like Liability, Termination, Jurisdiction). If a major risk exists, return a short HTML warning block. If it's safe, reply exactly with 'SAFE'.`;
+            
+            const result = await askGemini(instruction, textContext, null, 'right');
+            if(result && result.trim() !== 'SAFE') {
+                 const div = document.createElement('div');
+                 div.innerHTML = `<div class="ai-guardrail" style="padding:15px; margin-top:20px; color:black; border-radius:8px;"><strong>🚨 AI Legal Guardrails Alert:</strong><br>${result}</div>`;
+                 DOM.canvas.appendChild(div);
+                 saveVersion();
+            } else {
+                 alert("AI Guardrails Passed. No major structural risks detected.");
+            }
+        }
+
+        // --- DATA SYNC & VARIABLES ---
+        function updateBrain() {
+            appState.docContext.client = DOM.brainInputs.c.value;
+            appState.docContext.amount = DOM.brainInputs.a.value;
+            appState.docContext.date = DOM.brainInputs.d.value;
+            // Normalized for math
+            appState.docContext['Client Name'] = DOM.brainInputs.c.value;
+            appState.docContext['Amount'] = DOM.brainInputs.a.value;
+            appState.docContext['Date'] = DOM.brainInputs.d.value;
+        }
+
+        function autofillDoc() {
+            let html = DOM.canvas.innerHTML;
+            if(appState.docContext.client) html = html.replace(/\[Client Name\]|\[Client\]/gi, appState.docContext.client);
+            if(appState.docContext.amount) html = html.replace(/\[Amount\]|\[Total\]/gi, `$${appState.docContext.amount}`);
+            if(appState.docContext.date) html = html.replace(/\[Date\]/gi, appState.docContext.date);
+            DOM.canvas.innerHTML = html; 
+            evaluateMathFields(); saveVersion(); closeMobilePanels();
+        }
+
+        function syncLiveData() {
+            let html = DOM.canvas.innerHTML;
+            const liveRegex = /\[Live_([A-Za-z0-9_]+)\]/g;
+            const externalData = { "TaxRate": "0.18", "CurrentYear": "2026", "MarketPrice": "1500" }; // Simulated API
+            let synced = false;
+            html = html.replace(liveRegex, (match, variable) => {
+                if (externalData[variable]) { synced = true; return `[${variable}]`; }
+                return match;
+            });
+            if (synced) {
+                appState.docContext = { ...appState.docContext, ...externalData };
+                DOM.canvas.innerHTML = html; evaluateMathFields(); saveVersion();
+                alert("Live External Data Synced successfully.");
+            } else { alert("No [Live_...] tags found to sync in this document."); }
+        }
+
+        // --- TEMPLATE SYSTEM (LOCAL STORAGE) ---
+        function saveCurrentAsTemplate() {
+            let name = prompt("Enter a name for this custom template:");
+            if(!name) return;
+            let tmpls = JSON.parse(localStorage.getItem('novadraft_templates') || '[]');
+            tmpls.push({ name: name, html: DOM.canvas.innerHTML });
+            localStorage.setItem('novadraft_templates', JSON.stringify(tmpls));
+            renderSavedTemplates();
+            alert("Template saved successfully to Library.");
+        }
+
+        function renderSavedTemplates() {
+            let tmpls = JSON.parse(localStorage.getItem('novadraft_templates') || '[]');
+            let container = document.getElementById('saved-templates-list');
+            if(tmpls.length === 0) { 
+                container.innerHTML = '<p class="text-xs theme-text-muted italic">No templates saved yet.</p>'; 
+                return; 
+            }
+            container.innerHTML = tmpls.map((t, i) => `<button onclick="loadSavedTemplate(${i})" class="w-full btn justify-start text-xs mb-2 hover:bg-white/5 border-indigo-500/30 text-indigo-400"><i data-lucide="file" class="w-3.5 h-3.5"></i> ${t.name}</button>`).join('');
+            lucide.createIcons();
+        }
+
+        function loadSavedTemplate(index) {
+            let tmpls = JSON.parse(localStorage.getItem('novadraft_templates') || '[]');
+            if(tmpls[index]) {
+                DOM.canvas.innerHTML = tmpls[index].html;
+                saveVersion();
+                closeMobilePanels();
+                alert(`Loaded Template: ${tmpls[index].name}`);
+            }
+        }
+
+        const baseTemplates = {
+            invoice: `<div style="font-family:sans-serif; max-width:800px; margin:auto;"><div style="display:flex; justify-content:space-between; border-bottom:2px solid #ccc; padding-bottom:20px; margin-bottom:20px;"><div><h1 style="margin:0;">INVOICE</h1><p style="color:#666;">#INV-2026-001</p></div><div style="text-align:right;"><strong>[Company]</strong><br>[Address]</div></div><div style="margin-bottom:30px;"><strong>Billed To:</strong><br>[Client Name]<br></div><table style="width:100%; border-collapse:collapse; margin-bottom:20px;"><tr style="background:#f4f4f5; text-align:left; color:black;"><th style="padding:10px; border-bottom:1px solid #ccc;">Description</th><th style="padding:10px; border-bottom:1px solid #ccc; text-align:right;">Amount</th></tr><tr style="color:black;"><td style="padding:10px; border-bottom:1px solid #eee;">Consulting Services</td><td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">[Amount]</td></tr></table><div style="text-align:right; font-size:1.2em; margin-top:20px;"><strong>Total Due: <span style="color:#10b981;">[[ [Amount] * 1.0 ]]</span></strong></div></div>`,
+            contract: `<div style="font-family:serif; line-height:1.8; text-align:justify;"><h2 style="text-align:center; text-transform:uppercase;">Non-Disclosure Agreement</h2><p>This Agreement is entered into on <strong>[Date]</strong>, between <strong>[Company]</strong> and <strong>[Client Name]</strong>.</p><h3>1. Confidential Information</h3><p>The Receiving Party shall keep all information strictly confidential...</p><h3>2. Term</h3><p>This agreement shall remain in effect for a period of 2 years.</p><br><br><div style="display:flex; justify-content:space-between; margin-top:50px;"><div style="border-top:1px solid #000; width:40%; padding-top:10px;">Signature (Company)</div><div style="border-top:1px solid #000; width:40%; padding-top:10px;">Signature (Client)</div></div></div>`,
+            proposal: `<div style="font-family:sans-serif;"><div style="background:#09090b; color:white; padding:40px; border-radius:8px; margin-bottom:30px;"><h1>Project Proposal</h1><p style="font-size:1.2em; color:#a1a1aa;">Prepared for: [Client Name]</p></div><h2>Executive Summary</h2><p>We propose a comprehensive solution to streamline your operations...</p><h2>Investment</h2><table style="width:100%; border-collapse:collapse; margin-top:20px;"><tr style="background:#f4f4f5; color:black;"><th style="padding:10px; text-align:left;">Phase</th><th style="padding:10px; text-align:right;">Cost</th></tr><tr style="color:black;"><td style="padding:10px; border-bottom:1px solid #eee;">Phase 1: Design</td><td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$5000</td></tr></table><p><strong>Discount Logic:</strong> [[ IF 5000 > 1000 THEN 5000 * 0.9 ELSE 5000 ]]</p></div>`,
+            ppt: `<div style="text-align:center; padding-top:10vh;"><h1 style="font-size: 4rem; color: #6366f1; margin-bottom:20px;">Q3 Strategy Deck</h1><p style="font-size: 2rem; color: #666;">Presented by [Company]</p></div>`
+        };
+
+        function loadTemplate(key) { 
+            let html = baseTemplates[key];
+            // Auto-inject DNA if available
+            if(companyDNA.company) html = html.replace(/\[Company\]/g, companyDNA.company);
+            if(companyDNA.address) html = html.replace(/\[Address\]/g, companyDNA.address);
+            
+            DOM.canvas.innerHTML = html; 
+            saveVersion(); closeMobilePanels(); runAudit(); 
+        }
+
+        // --- HISTORY, PERMISSIONS & CONTEXT MENU ---
+        function saveVersion() {
+            if (appState.role === 'viewer') return; 
+            if(appState.history.length > 0 && appState.history[appState.history.length-1] === DOM.canvas.innerHTML) return;
+            appState.history.push(DOM.canvas.innerHTML);
+            if(appState.history.length > 20) appState.history.shift(); 
+            document.getElementById('ver-count').innerText = appState.history.length;
+            updateTimelineUI();
+        }
+
+        function restoreLastVersion() {
+            if(appState.role === 'viewer') return;
+            if(appState.history.length > 1) {
+                appState.history.pop(); 
+                DOM.canvas.innerHTML = appState.history[appState.history.length - 1];
+                document.getElementById('ver-count').innerText = appState.history.length;
+                updateTimelineUI();
+            }
+        }
+
+        function updateTimelineUI() {
+            const list = document.getElementById('timeline-list');
+            if(!list) return;
+            list.innerHTML = appState.history.map((_, i) => `<div class="relative mb-3"><div class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-indigo-500"></div><p class="text-[10px] theme-text-muted">Version ${i+1} saved.</p></div>`).reverse().join('');
+        }
+
+        function updatePermissions() {
+            appState.role = document.getElementById('role-selector').value;
+            const cursor = document.getElementById('sim-cursor');
+            if(appState.role === 'viewer') {
+                DOM.canvas.classList.add('view-only'); DOM.canvas.contentEditable = "false";
+                if(cursor) cursor.style.display = 'block';
+                alert("Client Simulation Mode Enabled: Changes made now will calculate locally but won't save to the master document.");
+            } else {
+                DOM.canvas.classList.remove('view-only'); DOM.canvas.contentEditable = "true";
+                if(cursor) cursor.style.display = 'none';
+                if (appState.history.length > 0) { DOM.canvas.innerHTML = appState.history[appState.history.length - 1]; }
+            }
+        }
+
+        let currentSelNode = null;
+        async function ctxExec(cmd) {
+            DOM.ctxMenu.style.display = 'none';
+            if(!currentSelNode) return;
+            if(cmd === 'lock') {
+                currentSelNode.contentEditable = "false"; currentSelNode.classList.add('locked-section'); saveVersion();
+            } else if (cmd === 'unlock') {
+                currentSelNode.contentEditable = "true"; currentSelNode.classList.remove('locked-section'); saveVersion();
+            } else if (cmd === 'rewrite' || cmd === 'summarize') {
+                const text = currentSelNode.innerText;
+                const prompt = cmd === 'rewrite' ? "Rewrite this professionally." : "Summarize this in one short sentence.";
+                const res = await askGemini(prompt, text, null, 'right');
+                if(res) { currentSelNode.innerHTML = res; saveVersion(); }
+            }
+        }
+
+        // --- EXPORT, SHARE & SIGNATURE ---
+        function exportDoc(type) {
+            const content = DOM.canvas.innerText;
+            if(type === 'pdf') { html2pdf().set({ margin: [10, 10], filename: 'NovaDraft.pdf', jsPDF: { format: 'a4' } }).from(DOM.canvas).save(); } 
+            else if(type === 'ppt') { alert("Exporting Slide Data. (In production, this maps JSON to PPTX)."); exportDoc('api'); }
+            else if(type === 'wa') { window.open(`https://wa.me/?text=${encodeURIComponent("Please review this document:\n\n" + content.substring(0, 500) + "...")}`, '_blank'); } 
+            else if(type === 'email') { window.open(`mailto:?subject=Document Output&body=${encodeURIComponent(content.substring(0, 1000))}`, '_blank'); } 
+            else if(type === 'api') {
+                const jsonStr = JSON.stringify({ document: DOM.canvas.innerHTML, metadata: appState.docContext }, null, 2);
+                const w = window.open(); w.document.write(`<pre style="background:#000;color:#0f0;padding:20px;">${jsonStr.replace(/</g, '&lt;')}</pre>`);
+            }
+        }
+
+        function shareDocumentReal() {
+            const stateObj = { html: DOM.canvas.innerHTML, ctx: appState.docContext };
+            const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(stateObj))));
+            const mockUrl = `${window.location.origin}${window.location.pathname}?session_id=${Date.now()}`;
+            prompt("Live Collaboration Link Generated (Role: Editor):", mockUrl);
+        }
+
+        function openPaymentModal() { document.getElementById('payment-modal').style.display = 'flex'; }
+        function processFakePayment() {
+            setTimeout(() => {
+                closeModals();
+                appState.paymentStatus = true;
+                const el = document.getElementById('pay-status');
+                el.innerText = "Paid Securely"; el.className = "text-xs font-semibold text-emerald-500";
+                alert("Payment processed successfully.");
+            }, 1000);
+        }
+
+        function handleAttachment(e) {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64 = event.target.result;
+                const html = await askGemini("Convert this image/document exactly into clean, semantic HTML. Use tables if needed.", "", base64, 'left');
+                if(html) { DOM.canvas.innerHTML = html; saveVersion(); closeMobilePanels(); }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        const sigCanvas = document.getElementById('sig-canvas'); const sigCtx = sigCanvas.getContext('2d'); let isDrawing = false;
+        if(sigCanvas) {
+            sigCanvas.addEventListener('mousedown', startPos); sigCanvas.addEventListener('touchstart', startPos);
+            sigCanvas.addEventListener('mouseup', endPos); sigCanvas.addEventListener('touchend', endPos);
+            sigCanvas.addEventListener('mousemove', draw); sigCanvas.addEventListener('touchmove', draw);
+        }
+        function startPos(e) { isDrawing = true; draw(e); } function endPos() { isDrawing = false; sigCtx.beginPath(); }
+        function draw(e) {
+            if(!isDrawing) return; e.preventDefault(); 
+            const rect = sigCanvas.getBoundingClientRect(); const clientX = e.clientX || e.touches[0].clientX; const clientY = e.clientY || e.touches[0].clientY;
+            sigCtx.lineWidth = 2; sigCtx.lineCap = 'round'; sigCtx.strokeStyle = '#000';
+            sigCtx.lineTo(clientX - rect.left, clientY - rect.top); sigCtx.stroke(); sigCtx.beginPath(); sigCtx.moveTo(clientX - rect.left, clientY - rect.top);
+        }
+        function clearSignature() { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
+        function openSignature() {
+            closeMobilePanels(); document.getElementById('sig-modal').style.display = 'flex';
+            setTimeout(() => { const rect = sigCanvas.parentElement.getBoundingClientRect(); sigCanvas.width = rect.width - 32; }, 100);
+        }
+        function saveSignature() {
+            const dataUrl = sigCanvas.getContext('2d').canvas.toDataURL();
+            const img = document.createElement('img'); img.src = dataUrl; img.style.maxHeight = '80px'; img.style.borderBottom = '1px solid #000'; img.style.display = 'block';
+            if(window.getSelection().rangeCount > 0 && DOM.canvas.contains(window.getSelection().anchorNode)) { window.getSelection().getRangeAt(0).insertNode(img); } 
+            else { DOM.canvas.appendChild(img); }
+            closeModals(); saveVersion(); clearSignature();
+        }
+
+        // --- COMMAND PALETTE LOGIC ---
+        function toggleCmdPalette() {
+            const el = document.getElementById('cmd-palette'); el.classList.toggle('active');
+            if(el.classList.contains('active')) { setTimeout(() => document.getElementById('cmd-input').focus(), 100); }
+        }
+        
+        async function executeCmd(cmd) {
+            closeModals();
+            if(cmd === 'audit') runAudit(); 
+            if(cmd === 'ai_audit') runAIGuardrails();
+            if(cmd === 'live_sync') syncLiveData();
+            if(cmd === 'export_pdf') exportDoc('pdf'); 
+            if(cmd === 'invoice') loadTemplate('invoice');
+            if(cmd === 'semantic_search') {
+                const query = prompt("What do you want to find in this document?");
+                if(query) {
+                    const result = await askGemini(`Extract and summarize the answer based on the query: "${query}".`, DOM.canvas.innerText, null, 'right');
+                    alert(`Semantic Search Result:\n\n${result}`);
+                }
+            }
+            if(cmd === 'brand_convert') {
+                const brand = prompt("Enter brand aesthetic (e.g., 'Modern Tech, Dark Mode, Purple Accents'):");
+                if (brand) {
+                    const html = await askGemini(`Convert this HTML's inline CSS strictly to match this brand aesthetic: ${brand}. DO NOT modify text.`, DOM.canvas.innerHTML, null, 'right');
+                    if(html) { DOM.canvas.innerHTML = html; saveVersion(); }
+                }
+            }
+        }
+
+        document.getElementById('cmd-input').addEventListener('keypress', async (e) => {
+            if(e.key === 'Enter') {
+                const req = e.target.value; closeModals();
+                const html = await askGemini(`Generate HTML block for: ${req}`, "", null, 'left');
+                if(html) { DOM.canvas.innerHTML += html; saveVersion(); }
+                e.target.value = '';
+            }
+        });
+
+        // --- UTILS ---
+        function updateAnalytics() {
+            if(document.getElementById('dashboard-view').classList.contains('hidden')) {
+                const words = DOM.canvas.innerText.trim().split(/\s+/).filter(w => w.length > 0).length;
+                document.getElementById('stat-words').innerText = words;
+                const minutes = Math.floor((Date.now() - appState.startTime) / 60000);
+                document.getElementById('stat-time').innerText = minutes;
+            }
+        }
+        function toggleMobilePanel(id) {
+            const panel = document.getElementById(id); const otherPanelId = id === 'sidebar-left' ? 'sidebar-right' : 'sidebar-left';
+            document.getElementById(otherPanelId).classList.remove('open'); panel.classList.toggle('open');
+        }
+        function closeMobilePanels() { document.getElementById('sidebar-left').classList.remove('open'); document.getElementById('sidebar-right').classList.remove('open'); }
+        function debounce(func, wait) { let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
+        function handleTyping() { saveVersion(); }
+    </script>
+</body>
+</html>
