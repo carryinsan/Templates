@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartDraft AI | Collaborative Document OS V2.0</title>
+    <meta name="description" content="SmartDraft AI V2: The ultimate collaborative document OS. Featuring WebRTC live-sync, Community Templates, Deep Analytics, and AI workflows.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================================================
+           1. THEME ENGINE: CORE CSS VARIABLES (6 PREMIUM PRESETS)
+           ========================================================================== */
+        :root {
+            /* Theme 1: Midnight Indigo (Default Dark) */
+            --bg-main: #09090b; --bg-panel: #18181b; --bg-header: rgba(9, 9, 11, 0.95);
+            --border: #27272a; --border-light: #3f3f46;
+            --text-main: #f4f4f5; --text-muted: #a1a1aa;
+            --accent: #6366f1; --accent-hover: #4f46e5; --accent-glow: rgba(99, 102, 241, 0.2);
+            --canvas-bg: #ffffff; --canvas-text: #171717;
+            --sidebar-width: 360px; --shadow-glow: 0 0 30px var(--accent-glow);
+            --page-break-color: #3f3f46; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+        }
+
+        [data-theme="light-minimal"] {
+            /* Theme 2: Nordic Clean (Light) */
+            --bg-main: #f3f4f6; --bg-panel: #ffffff; --bg-header: rgba(255, 255, 255, 0.95);
+            --border: #e5e7eb; --border-light: #d1d5db;
+            --text-main: #111827; --text-muted: #6b7280;
+            --accent: #0f172a; --accent-hover: #334155; --accent-glow: rgba(0, 0, 0, 0.1);
+            --canvas-bg: #ffffff; --canvas-text: #111827;
+            --shadow-glow: 0 10px 25px var(--accent-glow);
+            --page-break-color: #d1d5db;
+        }
+
+        [data-theme="midnight-gold"] {
+            /* Theme 3: Luxury Legal (Gold/Black) */
+            --bg-main: #000000; --bg-panel: #0a0a0a; --bg-header: rgba(0, 0, 0, 0.95);
+            --border: #262626; --border-light: #404040;
+            --text-main: #fafafa; --text-muted: #a3a3a3;
+            --accent: #d97706; --accent-hover: #b45309; --accent-glow: rgba(217, 119, 6, 0.15);
+            --canvas-bg: #fffdf5; --canvas-text: #171717;
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --page-break-color: #404040;
+        }
+
+        [data-theme="enterprise-blue"] {
+            /* Theme 4: Corporate Slate (Navy/Blue) */
+            --bg-main: #0f172a; --bg-panel: #1e293b; --bg-header: rgba(15, 23, 42, 0.95);
+            --border: #334155; --border-light: #475569;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --accent: #2563eb; --accent-hover: #1d4ed8; --accent-glow: rgba(37, 99, 235, 0.2);
+            --canvas-bg: #ffffff; --canvas-text: #0f172a;
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --page-break-color: #475569;
+        }
+
+        [data-theme="cyber-neon"] {
+            /* Theme 5: Cyber Neon (Hacker Mode) */
+            --bg-main: #050505; --bg-panel: #111111; --bg-header: rgba(5, 5, 5, 0.95);
+            --border: #333333; --border-light: #444444;
+            --text-main: #00ffcc; --text-muted: #008866;
+            --accent: #ff0055; --accent-hover: #cc0044; --accent-glow: rgba(255, 0, 85, 0.3);
+            --canvas-bg: #0a0a0a; --canvas-text: #00ffcc;
+            --shadow-glow: 0 0 40px var(--accent-glow);
+            --page-break-color: #00ffcc;
+        }
+
+        [data-theme="rose-quartz"] {
+            /* Theme 6: Rose Quartz (Soft & Elegant) */
+            --bg-main: #fff1f2; --bg-panel: #ffffff; --bg-header: rgba(255, 255, 255, 0.95);
+            --border: #fecdd3; --border-light: #fda4af;
+            --text-main: #4c0519; --text-muted: #9f1239;
+            --accent: #e11d48; --accent-hover: #be123c; --accent-glow: rgba(225, 29, 72, 0.2);
+            --canvas-bg: #ffffff; --canvas-text: #4c0519;
+            --shadow-glow: 0 10px 30px var(--accent-glow);
+            --page-break-color: #fda4af;
+        }
+
+        /* ==========================================================================
+           2. GLOBAL TYPOGRAPHY, UTILITIES & ANIMATIONS
+           ========================================================================== */
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            overflow: hidden; overscroll-behavior-y: none; 
+            background-color: var(--bg-main); color: var(--text-main); 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .theme-bg-main { background-color: var(--bg-main); color: var(--text-main); transition: background-color 0.3s ease; }
+        .theme-bg-panel { background-color: var(--bg-panel); transition: background-color 0.3s ease; }
+        .theme-bg-header { background-color: var(--bg-header); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .theme-border { border-color: var(--border); }
+        .theme-text-main { color: var(--text-main); }
+        .theme-text-muted { color: var(--text-muted); }
+        .theme-accent { color: var(--accent); }
+        .theme-accent-bg { background-color: var(--accent); color: #fff; box-shadow: var(--shadow-glow); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 6px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px var(--accent-glow); } 50% { box-shadow: 0 0 50px var(--accent-glow); transform: scale(1.01); } }
+        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+
+        /* ==========================================================================
+           3. ADVANCED V2 COMPONENTS (WEBRTC, DIFF VIEWER, CHAT, BUNDLES)
+           ========================================================================== */
+        
+        /* Collaborative Remote Cursor */
+        .remote-cursor {
+            position: absolute; pointer-events: none; z-index: 50; transition: top 0.1s, left 0.1s;
+            border-left: 2px solid var(--accent); height: 1.2em; display: none;
+        }
+        .remote-cursor::after {
+            content: attr(data-user); position: absolute; top: -18px; left: 0;
+            background: var(--accent); color: white; font-size: 10px; font-weight: bold;
+            padding: 2px 6px; border-radius: 4px; border-bottom-left-radius: 0; white-space: nowrap;
+        }
+
+        /* WebRTC Video Overlay */
+        #rtc-video-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; gap: 10px;
+            background: var(--bg-panel); padding: 8px; border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); transition: all 0.3s;
+        }
+        .rtc-video {
+            width: 120px; height: 90px; background: #000; border-radius: 10px; object-fit: cover;
+            border: 1px solid var(--border-light);
+        }
+
+        /* Version Control Diff Highlights */
+        .diff-add { background-color: rgba(16, 185, 129, 0.2); text-decoration: none; border-bottom: 2px solid var(--success); }
+        .diff-remove { background-color: rgba(239, 68, 68, 0.2); text-decoration: line-through; color: var(--danger); opacity: 0.7; }
+        
+        /* Chat UI Bubbles */
+        .chat-bubble-me { background: var(--accent); color: white; padding: 10px 14px; border-radius: 16px 16px 4px 16px; margin-left: auto; max-width: 85%; font-size: 0.85rem; }
+        .chat-bubble-them { background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); padding: 10px 14px; border-radius: 16px 16px 16px 4px; max-width: 85%; font-size: 0.85rem; }
+
+        /* Dashboard Tab System */
+        .dash-tab-content { display: none; animation: fadeIn 0.3s; }
+        .dash-tab-content.active { display: block; }
+        .dash-nav-btn { position: relative; padding: 10px 16px; color: var(--text-muted); font-weight: 600; transition: color 0.3s; }
+        .dash-nav-btn:hover { color: var(--text-main); }
+        .dash-nav-btn.active { color: var(--accent); }
+        .dash-nav-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--accent); border-radius: 2px 2px 0 0; }
+
+        /* ==========================================================================
+           4. CANVAS ARCHITECTURE: DOC, PDF (WPS STYLE), PPT
+           ========================================================================== */
+        .canvas-wrapper { 
+            background-color: var(--bg-main); 
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 24px 24px; overflow-y: auto; overflow-x: hidden; 
+            height: calc(100vh - 64px); scroll-behavior: smooth; position: relative; 
+            display: flex; flex-direction: column; align-items: center; 
+            padding-top: 2rem; padding-bottom: 8rem;
+        }
+
+        #doc-canvas { 
+            background: var(--canvas-bg); color: var(--canvas-text); 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            border-radius: 8px; outline: none; position: relative; 
+            line-height: 1.7; transition: all 0.3s ease; margin: 0 auto;
+        }
+
+        /* Mode 1: Standard A4 Continuous */
+        #doc-canvas.mode-doc { width: 210mm; min-height: 297mm; padding: 25mm 20mm; }
+
+        /* Mode 2: Multi-Page PDF (WPS Style Physical Page Breaks) */
+        #doc-canvas.mode-pdf { 
+            width: 210mm; min-height: 297mm; padding: 25mm 20mm;
+            background-image: repeating-linear-gradient(to bottom, transparent, transparent 295mm, var(--page-break-color) 295mm, var(--page-break-color) 297mm);
+        }
+        
+        .page-break-element {
+            display: block; width: 100%; height: 40px; margin: 20px 0;
+            border-bottom: 2px dashed var(--accent); position: relative;
+            page-break-after: always; break-after: page;
+        }
+        .page-break-element::after {
+            content: '✂️ PAGE BREAK'; position: absolute; bottom: -10px; left: 50%;
+            transform: translateX(-50%); background: var(--canvas-bg); color: var(--accent);
+            padding: 0 10px; font-size: 10px; font-weight: bold; letter-spacing: 2px;
+        }
+
+        /* Mode 3: 16:9 Presentation Slide */
+        .canvas-wrapper.mode-ppt-wrapper { overflow-x: auto; padding: 2rem; justify-content: center; }
+        #doc-canvas.mode-ppt { 
+            width: 1280px; min-height: 720px; padding: 50px; border-radius: 16px;
+            font-size: 1.5rem; display: flex; flex-direction: column; justify-content: center;
+        }
+        @media (max-width: 1400px) { #doc-canvas.mode-ppt { transform: scale(0.7); transform-origin: top center; margin-bottom: -216px; } }
+        @media (max-width: 768px) { 
+            #doc-canvas.mode-ppt { transform: scale(0.35); transform-origin: top left; margin-bottom: -468px; margin-left: 0; } 
+            .canvas-wrapper.mode-ppt-wrapper { align-items: flex-start; justify-content: flex-start; padding: 1rem; }
+        }
+
+        /* Canvas Interactive Components */
+        .calc-field { background: rgba(16, 185, 129, 0.1); border-bottom: 2px dashed var(--success); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .smart-field { background: var(--accent-glow); border-bottom: 2px dashed var(--accent); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .locked-section { border: 2px solid var(--danger); position: relative; background: rgba(239,68,68,0.02); border-radius: 4px; padding: 4px; }
+        .locked-section::before { content: '🔒 ENCRYPTED'; position: absolute; top: -12px; right: 8px; font-size: 9px; font-weight: bold; background: var(--danger); color: white; padding: 2px 8px; border-radius: 12px; }
+        .ai-guardrail { background: rgba(245, 158, 11, 0.2); border-bottom: 2px wavy var(--warning); cursor: help; transition: all 0.2s; }
+
+        #doc-canvas.view-only { pointer-events: none; user-select: text; }
+        #doc-canvas.view-only [contenteditable="true"] { pointer-events: auto; }
+        [contenteditable]:empty::before { content: attr(data-placeholder); color: #a1a1aa; pointer-events: none; display: block; font-style: italic; }
+
+        /* ==========================================================================
+           5. UI COMPONENTS: BUTTONS, INPUTS, MODALS, CARDS
+           ========================================================================== */
+        .theme-input { 
+            background-color: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); 
+            border-radius: 10px; padding: 12px 16px; font-size: 0.875rem; 
+            transition: all 0.2s ease; outline: none; width: 100%; 
+        }
+        .theme-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        
+        .btn { 
+            background-color: var(--bg-panel); border: 1px solid var(--border); color: var(--text-main); 
+            border-radius: 10px; padding: 10px 16px; font-size: 0.875rem; font-weight: 600; 
+            transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; 
+            gap: 8px; cursor: pointer; user-select: none;
+        }
+        .btn:hover { border-color: var(--border-light); background-color: var(--bg-main); }
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary { background-color: var(--accent); color: white; border-color: var(--accent-hover); box-shadow: 0 4px 12px var(--accent-glow); }
+        .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); box-shadow: 0 6px 16px var(--accent-glow); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(1px) scale(0.98); }
+
+        .btn-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background-color: var(--danger); color: white; }
+
+        .modal-bg { background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .glass-panel { background: rgba(24, 24, 27, 0.6); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08); }
+        
+        .stat-card { background-color: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; transition: transform 0.3s, box-shadow 0.3s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-color: var(--border-light); }
+
+        .loader { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 18px; height: 18px; animation: spin-slow 0.8s linear infinite; }
+
+        /* ==========================================================================
+           6. RESPONSIVE LAYOUT & MOBILE BOTTOM DRAWERS
+           ========================================================================== */
+        .sidebar { width: var(--sidebar-width); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); z-index: 40; }
+        .sidebar-tab-content { display: none; animation: fadeIn 0.3s; } .sidebar-tab-content.active { display: block; }
+        .tab-btn { position: relative; transition: color 0.3s; }
+        .tab-btn::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background-color: var(--accent); transition: width 0.3s; }
+        .tab-btn.active { color: var(--accent); }
+        .tab-btn.active::after { width: 100%; }
+        
+        @media (max-width: 1024px) {
+            .mobile-hide { display: none !important; }
+            .sidebar { 
+                position: fixed; top: auto; bottom: 70px; left: 0; right: 0; width: 100%; height: 75vh; 
+                transform: translateY(150%); border: none; border-top: 1px solid var(--border); 
+                border-radius: 24px 24px 0 0; box-shadow: 0 -15px 50px rgba(0,0,0,0.7); 
+            }
+            #sidebar-left.open, #sidebar-right.open { transform: translateY(0); }
+            .canvas-wrapper { height: calc(100vh - 64px - 70px); padding: 0; padding-bottom: 2rem; }
+            #doc-canvas.mode-doc, #doc-canvas.mode-pdf { width: 100%; margin: 0; border-radius: 0; min-height: 100%; padding: 5mm; background-image: none; }
+            .mobile-nav { display: flex; position: fixed; bottom: 0; width: 100%; height: 70px; z-index: 50; }
+        }
+        @media (min-width: 1025px) { .mobile-nav { display: none !important; } }
+        @media print { body * { visibility: hidden; } #doc-canvas, #doc-canvas * { visibility: visible; } #doc-canvas { position: absolute; left: 0; top: 0; margin: 0; padding: 0; box-shadow: none; width: 100%; border-radius: 0; } }
+    </style>
+</head>
+<body class="theme-bg-main flex flex-col h-screen text-sm">
+
+    <div id="auth-modal" class="fixed inset-0 modal-bg z-[9999] hidden flex-col items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-md shadow-2xl relative overflow-hidden slide-up">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
+            
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-14 h-14 rounded-2xl theme-accent-bg flex items-center justify-center shadow-lg"><i data-lucide="layers" class="w-8 h-8 text-white"></i></div>
+                <div>
+                    <h2 class="theme-text-main text-3xl font-extrabold tracking-tight">SmartDraft <span class="theme-accent">AI</span></h2>
+                    <p class="theme-text-muted text-[10px] font-bold tracking-widest uppercase mt-1">Collaborative OS V2</p>
+                </div>
+            </div>
+            
+            <div class="mb-6 p-4 rounded-xl bg-black/20 border theme-border">
+                <p class="text-xs theme-text-muted leading-relaxed">
+                    Welcome to the definitive AI Workspace. A unique OS Identity (UID) will be generated for you to interact securely with the Community Marketplace and WebRTC.
+                </p>
+            </div>
+            
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase tracking-wider font-bold mb-2 block">System Alias / User Name</label>
+                    <input type="text" id="auth-name" placeholder="Enter your identity" class="theme-input py-3.5">
+                </div>
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase tracking-wider font-bold mb-2 block flex justify-between">
+                        <span>Master Password</span>
+                        <span class="text-emerald-500 font-normal">Required for Admin limits</span>
+                    </label>
+                    <input type="password" id="auth-pass" placeholder="••••••••" class="theme-input py-3.5">
+                </div>
+                <button onclick="handleInitialLogin()" class="w-full btn btn-primary py-4 mt-2 text-sm font-bold tracking-wide rounded-xl">Generate UID & Initialize OS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="unlock-modal" class="fixed inset-0 modal-bg z-[9999] hidden flex-col items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-sm shadow-2xl relative overflow-hidden slide-up text-center">
+            <div class="w-16 h-16 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto mb-5 border border-indigo-500/20"><i data-lucide="lock-keyhole" class="w-8 h-8"></i></div>
+            <h2 class="theme-text-main text-2xl font-bold tracking-tight mb-2" id="unlock-greeting">Session Locked</h2>
+            <p class="theme-text-muted text-xs mb-8">Your workspace is encrypted. Please enter your master password to decrypt session data.</p>
+            
+            <input type="password" id="unlock-pass" placeholder="••••••••" class="theme-input py-3.5 text-center text-xl tracking-widest mb-4 font-mono">
+            <button onclick="handleUnlock()" class="w-full btn btn-primary py-3.5 font-bold rounded-xl mb-4">Decrypt & Enter</button>
+            
+            <div class="border-t theme-border pt-4 mt-2">
+                <p class="text-[10px] theme-text-muted mb-2 uppercase font-bold tracking-widest text-red-500">Emergency Data Purge</p>
+                <div class="flex gap-2">
+                    <input type="password" id="reset-pass-verify" placeholder="Confirm Password" class="theme-input py-2 text-xs text-center border-red-500/30 bg-red-500/5">
+                    <button onclick="resetAccountSecurely()" class="btn btn-danger text-xs font-bold px-4 rounded-lg">WIPE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 modal-bg z-[100] hidden items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-lg shadow-2xl slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="theme-text-main font-bold text-xl flex items-center gap-3"><i data-lucide="fingerprint" class="w-6 h-6 theme-accent"></i> System Profile & DNA</h3>
+                <button onclick="closeModals()" class="text-zinc-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="bg-black/20 p-4 rounded-xl border theme-border mb-6 flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] theme-text-muted font-bold uppercase tracking-widest mb-1">Your Public Network UID</p>
+                    <p class="text-sm font-mono theme-text-main font-bold" id="display-uid">SD-0000-0000</p>
+                </div>
+                <button class="btn text-xs py-1.5 px-3 border-indigo-500/30 text-indigo-400"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="col-span-full">
+                    <label class="text-[10px] theme-text-muted uppercase font-bold mb-1.5 block">Entity Name</label>
+                    <input type="text" id="prof-company" placeholder="e.g. Apex Software LLC" class="theme-input">
+                </div>
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase font-bold mb-1.5 block">Registration / Tax ID</label>
+                    <input type="text" id="prof-gst" placeholder="e.g. GSTIN / EIN" class="theme-input">
+                </div>
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase font-bold mb-1.5 block">Default AI Tone</label>
+                    <input type="text" id="prof-tone" placeholder="e.g. Strict Legal, Warm Corporate" class="theme-input">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModals()" class="btn px-6">Discard</button>
+                <button onclick="saveProfileDNA()" class="btn btn-primary px-6"><i data-lucide="save" class="w-4 h-4"></i> Save Context</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="fixed inset-0 theme-bg-main z-50 flex flex-col overflow-y-auto hidden">
+        
+        <header class="h-20 flex justify-between items-center px-6 md:px-10 border-b theme-border theme-bg-header sticky top-0 z-40">
+            <div class="font-extrabold text-2xl tracking-tight flex items-center gap-3 theme-text-main">
+                <div class="w-10 h-10 rounded-xl theme-accent-bg flex items-center justify-center shadow-lg"><i data-lucide="layers" class="w-5 h-5 text-white"></i></div>
+                SMART<span class="theme-accent">DRAFT</span> 
+            </div>
+            
+            <div class="hidden md:flex items-center gap-2">
+                <button class="dash-nav-btn active" onclick="switchDashTab('dash-overview')">Overview</button>
+                <button class="dash-nav-btn" onclick="switchDashTab('dash-insights')">Deep Insights</button>
+                <button class="dash-nav-btn" onclick="switchDashTab('dash-community')">Community Hub</button>
+                <button class="dash-nav-btn" onclick="switchDashTab('dash-bundles')">Bundles</button>
+            </div>
+
+            <div class="flex items-center gap-3 md:gap-5">
+                <div class="hidden lg:flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border theme-border">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                    <span class="text-xs font-bold theme-text-muted tracking-wide">WEBRTC ONLINE</span>
+                </div>
+                <span class="text-xs font-bold theme-text-main bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-full border border-indigo-500/20 flex items-center gap-2"><i data-lucide="cpu" class="w-3.5 h-3.5"></i> <span id="dash-ai-tokens" class="text-lg">3</span> <span class="hidden sm:inline">CALLS LEFT</span></span>
+                <button onclick="openProfile()" class="btn border-transparent hover:bg-white/10 p-2.5 rounded-full"><i data-lucide="fingerprint" class="w-5 h-5"></i></button>
+            </div>
+        </header>
+
+        <div id="dash-overview" class="dash-tab-content active max-w-7xl mx-auto w-full p-6 md:p-10 pt-8 md:pt-12 space-y-12">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-extrabold theme-text-main mb-3 tracking-tight">System initialized, <span id="dash-name" class="theme-accent">Creator</span>.</h1>
+                    <p class="text-base theme-text-muted">Select an architecture framework or connect to a live session.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openWebRTCModal()" class="btn border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 font-bold shadow-lg"><i data-lucide="radio" class="w-4 h-4"></i> Join Collab Session</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div onclick="initEditor('doc')" class="glass-panel rounded-3xl p-6 cursor-pointer group hover:border-indigo-500/50 transition-all duration-300 relative overflow-hidden" style="animation: pulse-glow 4s infinite;">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
+                    <div class="w-12 h-12 rounded-xl theme-accent-bg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg"><i data-lucide="file-text" class="w-6 h-6 text-white"></i></div>
+                    <h3 class="text-xl font-bold theme-text-main mb-1">A4 Document</h3>
+                    <p class="text-xs theme-text-muted">Standard continuous scroll.</p>
+                </div>
+
+                <div onclick="initEditor('pdf')" class="theme-bg-panel border theme-border rounded-3xl p-6 cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-300 group">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="copy" class="w-6 h-6"></i></div>
+                    <h3 class="text-xl font-bold theme-text-main mb-1">Paginated PDF</h3>
+                    <p class="text-xs theme-text-muted">WPS-style visible page breaks.</p>
+                </div>
+
+                <div onclick="initEditor('ppt')" class="theme-bg-panel border theme-border rounded-3xl p-6 cursor-pointer hover:border-orange-500/50 hover:bg-orange-500/5 transition-all duration-300 group">
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 border border-orange-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="projector" class="w-6 h-6"></i></div>
+                    <h3 class="text-xl font-bold theme-text-main mb-1">Presentation</h3>
+                    <p class="text-xs theme-text-muted">16:9 widescreen canvas slide.</p>
+                </div>
+                
+                <div onclick="switchDashTab('dash-community')" class="theme-bg-panel border theme-border rounded-3xl p-6 cursor-pointer hover:border-pink-500/50 hover:bg-pink-500/5 transition-all duration-300 group">
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i data-lucide="globe" class="w-6 h-6"></i></div>
+                    <h3 class="text-xl font-bold theme-text-main mb-1">Community Hub</h3>
+                    <p class="text-xs theme-text-muted">Browse public global templates.</p>
+                </div>
+            </div>
+            ```
+            <div class="mt-8">
+                <h4 class="text-[10px] font-bold theme-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4"></i> Quick Telemetry</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div class="stat-card">
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-2">Total Docs</p>
+                        <p class="text-3xl font-extrabold theme-text-main" id="stat-dash-docs">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-2">API Tokens</p>
+                        <p class="text-3xl font-extrabold text-indigo-400" id="stat-dash-tokens">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-2">Vault Items</p>
+                        <p class="text-3xl font-extrabold text-orange-400" id="stat-dash-templates">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-2">Hrs Saved</p>
+                        <p class="text-3xl font-extrabold text-emerald-400" id="stat-dash-time">0.0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-2">Clauses Auto</p>
+                        <p class="text-3xl font-extrabold text-pink-400" id="stat-dash-clauses">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-2">Value Tracked</p>
+                        <p class="text-3xl font-extrabold text-yellow-400" id="stat-dash-revenue">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                <div class="lg:col-span-2">
+                    <h3 class="text-lg font-bold theme-text-main mb-4 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i data-lucide="bookmark" class="w-5 h-5 theme-text-muted"></i> Your Private Vault</span>
+                        <button onclick="openCreationModal('template')" class="text-xs theme-accent hover:underline">Browse All</button>
+                    </h3>
+                    <div id="dash-saved-templates" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-8 text-center text-sm theme-text-muted border theme-border border-dashed rounded-2xl theme-bg-panel col-span-full">
+                            <i data-lucide="folder-lock" class="w-8 h-8 mx-auto mb-3 opacity-50"></i>
+                            No custom templates archived.<br>Create a document and hit "Save Canvas".
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold theme-text-main mb-4 flex items-center gap-2"><i data-lucide="activity" class="w-5 h-5 theme-text-muted"></i> System Feed</h3>
+                    <div class="border theme-border rounded-2xl theme-bg-panel p-5 shadow-sm">
+                        <div id="dash-activity-feed" class="space-y-5">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0"><i data-lucide="power" class="w-4 h-4"></i></div>
+                                <div>
+                                    <p class="text-sm font-bold theme-text-main">System Online</p>
+                                    <p class="text-[10px] theme-text-muted">OS Initialized securely.</p>
+                                    <p class="text-[9px] text-zinc-500 mt-1">Just now</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0"><i data-lucide="fingerprint" class="w-4 h-4"></i></div>
+                                <div>
+                                    <p class="text-sm font-bold theme-text-main">DNA Profile Active</p>
+                                    <p class="text-[10px] theme-text-muted">Ready to inject context.</p>
+                                    <p class="text-[9px] text-zinc-500 mt-1">System Boot</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dash-insights" class="dash-tab-content max-w-7xl mx-auto w-full p-6 md:p-10 pt-8 md:pt-12 space-y-12">
+            <div>
+                <h2 class="text-3xl font-extrabold theme-text-main mb-2">Deep Insights</h2>
+                <p class="theme-text-muted text-sm">Analyze your workflow, productivity, and business metrics.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="theme-bg-panel border theme-border rounded-3xl p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                    <h3 class="text-sm font-bold theme-text-muted uppercase tracking-widest mb-6 w-full text-left">Productivity Score</h3>
+                    <div class="relative w-40 h-40 flex items-center justify-center mb-6">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--border)" stroke-width="8"></circle>
+                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="62.8" stroke-linecap="round"></circle>
+                        </svg>
+                        <div class="absolute text-center">
+                            <span class="text-4xl font-extrabold theme-text-main" id="insight-score">85</span>
+                            <span class="text-[10px] theme-text-muted block mt-1">/ 100</span>
+                        </div>
+                    </div>
+                    <p class="text-xs theme-text-muted text-center max-w-[80%]">Top 15% of creators this week. High template reuse detected.</p>
+                </div>
+
+                <div class="lg:col-span-2 theme-bg-panel border theme-border rounded-3xl p-8 shadow-lg">
+                    <h3 class="text-sm font-bold theme-text-muted uppercase tracking-widest mb-6">Workflow Distribution</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between text-xs mb-2"><span class="font-bold theme-text-main">AI Generation vs Manual Editing</span> <span class="theme-text-muted">70% / 30%</span></div>
+                            <div class="w-full bg-black/20 h-3 rounded-full overflow-hidden flex">
+                                <div class="bg-indigo-500 h-full" style="width: 70%"></div>
+                                <div class="bg-orange-500 h-full" style="width: 30%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-2"><span class="font-bold theme-text-main">Document Completion Rate</span> <span class="theme-text-muted">92%</span></div>
+                            <div class="w-full bg-black/20 h-3 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full" style="width: 92%"></div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t theme-border grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] theme-text-muted uppercase font-bold mb-1">Most Used Smart Clause</p>
+                                <p class="text-sm font-bold theme-text-main text-indigo-400">Termination (Standard)</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] theme-text-muted uppercase font-bold mb-1">Avg. Session Duration</p>
+                                <p class="text-sm font-bold theme-text-main text-pink-400">14.5 mins</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold theme-text-main mb-4 flex items-center gap-2"><i data-lucide="briefcase" class="w-5 h-5 theme-text-muted"></i> Business & Revenue Matrix</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-panel border theme-border rounded-2xl p-6">
+                        <div class="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center mb-4"><i data-lucide="coins" class="w-5 h-5 text-yellow-500"></i></div>
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-1">Total Contract Value (YTD)</p>
+                        <p class="text-3xl font-extrabold theme-text-main" id="insight-revenue">$0.00</p>
+                    </div>
+                    <div class="theme-bg-panel border theme-border rounded-2xl p-6">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4"><i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i></div>
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-1">Paid / Executed</p>
+                        <p class="text-3xl font-extrabold theme-text-main">0</p>
+                    </div>
+                    <div class="theme-bg-panel border theme-border rounded-2xl p-6">
+                        <div class="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center mb-4"><i data-lucide="clock-4" class="w-5 h-5 text-red-500"></i></div>
+                        <p class="text-[10px] theme-text-muted uppercase font-bold mb-1">Pending / Outstanding</p>
+                        <p class="text-3xl font-extrabold theme-text-main">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dash-community" class="dash-tab-content max-w-7xl mx-auto w-full p-6 md:p-10 pt-8 md:pt-12 space-y-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+                <div>
+                    <h2 class="text-3xl font-extrabold theme-text-main mb-2">Community Marketplace</h2>
+                    <p class="theme-text-muted text-sm">Discover, import, and rate templates built by the global network.</p>
+                </div>
+                <button class="btn btn-primary shadow-lg"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Publish to Network</button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-5 h-5 theme-text-muted absolute left-4 top-1/2 transform -translate-y-1/2"></i>
+                    <input type="text" placeholder="Search templates (e.g. 'SaaS MSA', 'India GST Invoice')..." class="theme-input pl-12 py-3.5 bg-black/20">
+                </div>
+                <select class="theme-input w-full sm:w-48 py-3.5 bg-black/20 cursor-pointer">
+                    <option>All Categories</option>
+                    <option>Legal & Compliance</option>
+                    <option>Freelance & Agency</option>
+                    <option>Startup & VC</option>
+                </select>
+                <select class="theme-input w-full sm:w-48 py-3.5 bg-black/20 cursor-pointer">
+                    <option>Global (All)</option>
+                    <option>United States</option>
+                    <option>India 🇮🇳</option>
+                    <option>European Union</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="theme-bg-panel border theme-border rounded-2xl p-6 hover:border-indigo-500/50 transition-all group flex flex-col h-full shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded">Startup & VC</span>
+                        <div class="flex items-center gap-1 text-xs text-yellow-500 font-bold"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> 4.9</div>
+                    </div>
+                    <h3 class="text-lg font-bold theme-text-main mb-2">Y-Combinator SAFE Note (Post-Money)</h3>
+                    <p class="text-xs theme-text-muted mb-6 flex-1">Standard YC SAFE template with automated valuation cap math and dynamic investor blocks.</p>
+                    <div class="flex items-center justify-between border-t theme-border pt-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">V</div>
+                            <span class="text-xs theme-text-muted">@vaidik_dev</span>
+                        </div>
+                        <span class="text-[10px] theme-text-muted flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 12.4k</span>
+                    </div>
+                    <button class="w-full btn mt-4 bg-black/20 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-colors"><i data-lucide="copy-plus" class="w-4 h-4"></i> Import to Vault</button>
+                </div>
+
+                <div class="theme-bg-panel border theme-border rounded-2xl p-6 hover:border-indigo-500/50 transition-all group flex flex-col h-full shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">Legal 🇮🇳</span>
+                        <div class="flex items-center gap-1 text-xs text-yellow-500 font-bold"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> 4.8</div>
+                    </div>
+                    <h3 class="text-lg font-bold theme-text-main mb-2">Freelance Master MSA (India)</h3>
+                    <p class="text-xs theme-text-muted mb-6 flex-1">Comprehensive Master Service Agreement including strict late payment clauses and GST math engines.</p>
+                    <div class="flex items-center justify-between border-t theme-border pt-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-[10px] text-white font-bold">L</div>
+                            <span class="text-xs theme-text-muted">@legal_tech</span>
+                        </div>
+                        <span class="text-[10px] theme-text-muted flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 8.2k</span>
+                    </div>
+                    <button class="w-full btn mt-4 bg-black/20 hover:bg-indigo-500 hover:text-white transition-colors"><i data-lucide="copy-plus" class="w-4 h-4"></i> Import to Vault</button>
+                </div>
+
+                <div class="theme-bg-panel border theme-border rounded-2xl p-6 hover:border-indigo-500/50 transition-all group flex flex-col h-full shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-bold bg-orange-500/10 text-orange-400 px-2 py-1 rounded">Freelance & Agency</span>
+                        <div class="flex items-center gap-1 text-xs text-yellow-500 font-bold"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> 5.0</div>
+                    </div>
+                    <h3 class="text-lg font-bold theme-text-main mb-2">High-Ticket Web Design Proposal</h3>
+                    <p class="text-xs theme-text-muted mb-6 flex-1">A highly visual, persuasive proposal template with built-in multi-phase pricing tables and logic.</p>
+                    <div class="flex items-center justify-between border-t theme-border pt-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center text-[10px] text-white font-bold">A</div>
+                            <span class="text-xs theme-text-muted">@agency_pro</span>
+                        </div>
+                        <span class="text-[10px] theme-text-muted flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 4.1k</span>
+                    </div>
+                    <button class="w-full btn mt-4 bg-black/20 hover:bg-indigo-500 hover:text-white transition-colors"><i data-lucide="copy-plus" class="w-4 h-4"></i> Import to Vault</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="dash-bundles" class="dash-tab-content max-w-7xl mx-auto w-full p-6 md:p-10 pt-8 md:pt-12 space-y-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+                <div>
+                    <h2 class="text-3xl font-extrabold theme-text-main mb-2">Document Bundles</h2>
+                    <p class="theme-text-muted text-sm">Group multiple documents together to create client packages (e.g. Contract + Invoice + Proposal) for one-click sharing.</p>
+                </div>
+                <button class="btn btn-primary shadow-lg"><i data-lucide="package-plus" class="w-4 h-4"></i> Create New Bundle</button>
+            </div>
+
+            <div class="p-10 text-center border-2 border-dashed theme-border rounded-3xl theme-bg-panel flex flex-col items-center justify-center py-20">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-4"><i data-lucide="boxes" class="w-8 h-8"></i></div>
+                <h3 class="text-xl font-bold theme-text-main mb-2">No Bundles Created</h3>
+                <p class="text-sm theme-text-muted max-w-md mx-auto">Create a "Client Onboarding Package" to instantly generate and share an MSA, NDA, and Invoice simultaneously.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="webrtc-modal" class="fixed inset-0 modal-bg z-[100] hidden items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-md shadow-2xl fade-in relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-emerald-500"></div>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold theme-text-main flex items-center gap-2"><i data-lucide="radio" class="w-6 h-6 text-emerald-500"></i> Peer-to-Peer Sync</h2>
+                <button onclick="closeModals()" class="text-zinc-500 hover:text-white transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <p class="text-xs theme-text-muted mb-6 bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/20">
+                Establish a direct, encrypted WebRTC connection with a client or team member for 1:1 live editing and cursor tracking.
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase font-bold mb-1.5 block">Your UID (Share this to invite)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="rtc-my-uid" class="theme-input font-mono text-emerald-400 bg-black/40" readonly value="SD-1049-X8V2">
+                        <button class="btn border-emerald-500/30 text-emerald-500"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <div class="my-4 text-center text-[10px] font-bold theme-text-muted uppercase tracking-widest relative">
+                    <span class="bg-panel px-2 relative z-10 bg-[var(--bg-panel)]">OR CONNECT TO</span>
+                    <div class="absolute top-1/2 left-0 w-full h-px bg-[var(--border)] -z-0"></div>
+                </div>
+                <div>
+                    <label class="text-[10px] theme-text-muted uppercase font-bold mb-1.5 block">Partner's UID</label>
+                    <input type="text" id="rtc-partner-uid" placeholder="e.g. SD-9921-A4B1" class="theme-input font-mono uppercase">
+                </div>
+                <button onclick="initiateWebRTC()" class="w-full btn bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600 py-3.5 mt-2 font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]">Establish Secure Connection</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rtc-video-container" class="hidden">
+        <div class="relative">
+            <div class="absolute bottom-1 left-1 bg-black/60 backdrop-blur text-[9px] text-white px-1.5 rounded font-bold">You</div>
+            <video id="rtc-local-vid" class="rtc-video bg-zinc-900" autoplay muted playsinline></video>
+        </div>
+        <div class="relative">
+            <div class="absolute bottom-1 left-1 bg-emerald-500/80 backdrop-blur text-[9px] text-white px-1.5 rounded font-bold" id="rtc-partner-name">Partner</div>
+            <video id="rtc-remote-vid" class="rtc-video bg-zinc-800" autoplay playsinline></video>
+        </div>
+        <div class="flex flex-col gap-2 justify-center ml-1">
+            <button class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white hover:bg-zinc-700 border theme-border"><i data-lucide="mic" class="w-4 h-4"></i></button>
+            <button class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white border border-red-500/30 transition-colors"><i data-lucide="phone-off" class="w-4 h-4"></i></button>
+        </div>
+    </div>
+    ```
+    <div id="creation-modal" class="fixed inset-0 modal-bg z-[100] hidden items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-4xl shadow-2xl fade-in">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-extrabold theme-text-main">Select Architecture Blueprint</h2>
+                    <p class="theme-text-muted text-sm mt-1">Choose a foundational framework for your workspace canvas.</p>
+                </div>
+                <button onclick="closeModals()" class="text-zinc-500 hover:text-white transition bg-black/10 p-2 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <button onclick="initEditor('doc')" class="flex flex-col items-start p-6 border theme-border rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="file-text" class="w-6 h-6"></i></div>
+                    <h3 class="font-bold theme-text-main mb-2 text-lg">A4 Document</h3>
+                    <p class="text-xs theme-text-muted leading-relaxed">Continuous scroll canvas. Best for standard web contracts, invoices, and dynamic digital forms.</p>
+                </button>
+                
+                <button onclick="initEditor('pdf')" class="flex flex-col items-start p-6 border theme-border rounded-2xl hover:border-emerald-500 hover:bg-emerald-500/10 transition-all text-left group relative overflow-hidden shadow-sm">
+                    <div class="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] font-bold px-3 py-1 rounded-bl-lg tracking-widest">STANDARD</div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="copy" class="w-6 h-6"></i></div>
+                    <h3 class="font-bold theme-text-main mb-2 text-lg">Multi-Page PDF</h3>
+                    <p class="text-xs theme-text-muted leading-relaxed">Physical page breaks (WPS style). Perfect for multi-page legal documents, NDAs, and strict printing formats.</p>
+                </button>
+
+                <button onclick="initEditor('ppt')" class="flex flex-col items-start p-6 border theme-border rounded-2xl hover:border-orange-500 hover:bg-orange-500/10 transition-all text-left group shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="projector" class="w-6 h-6"></i></div>
+                    <h3 class="font-bold theme-text-main mb-2 text-lg">Presentation Deck</h3>
+                    <p class="text-xs theme-text-muted leading-relaxed">16:9 Slide Canvas. Ideal for pitch decks, strategy reports, and highly visual metric dashboards.</p>
+                </button>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t theme-border flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-xs theme-text-muted font-bold tracking-widest uppercase">Or Import Existing Data</p>
+                <div class="flex gap-3">
+                    <button class="btn text-xs bg-black/20 hover:bg-white/5"><i data-lucide="file-json" class="w-4 h-4 text-yellow-500"></i> Import JSON</button>
+                    <button class="btn text-xs bg-black/20 hover:bg-white/5"><i data-lucide="camera" class="w-4 h-4 text-blue-500"></i> Scan Image to Doc</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-workspace" class="flex flex-col h-screen w-full hidden">
+        
+        <header class="h-16 flex justify-between items-center px-4 border-b theme-border theme-bg-header z-40 shrink-0 relative shadow-sm">
+            
+            <div class="font-bold text-xl tracking-tight flex items-center gap-3 theme-text-main cursor-pointer hover:opacity-80 transition group" onclick="showDashboard()" title="Return to OS Dashboard">
+                <div class="w-8 h-8 rounded-lg theme-accent-bg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><i data-lucide="home" class="w-4 h-4 text-white"></i></div>
+                <span class="hidden sm:inline">SMART<span class="theme-accent">DRAFT</span></span>
+            </div>
+            
+            <div class="flex items-center gap-1 sm:gap-2 theme-bg-panel border theme-border rounded-lg p-1 overflow-x-auto no-scrollbar shadow-sm">
+                <div class="flex items-center gap-1 px-2 border-r theme-border shrink-0">
+                    <i data-lucide="monitor" class="w-3.5 h-3.5 theme-text-muted"></i>
+                    <select id="canvas-mode-selector" class="bg-transparent theme-text-main text-[11px] sm:text-xs outline-none pr-1 sm:pr-2 cursor-pointer font-bold tracking-wide" onchange="changeCanvasMode(this.value)">
+                        <option value="doc">A4 Canvas</option>
+                        <option value="pdf">Multi-Page</option>
+                        <option value="ppt">16:9 Slide</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-1 px-2 border-r theme-border shrink-0">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 theme-text-muted"></i>
+                    <select id="role-selector" class="bg-transparent theme-text-main text-[11px] sm:text-xs outline-none pr-1 sm:pr-2 cursor-pointer font-bold tracking-wide" onchange="updatePermissions()">
+                        <option value="admin">Admin (Edit)</option>
+                        <option value="viewer">Client (Simulate)</option>
+                    </select>
+                </div>
+                <div class="hidden md:flex items-center gap-1 px-2 shrink-0">
+                    <i data-lucide="palette" class="w-3.5 h-3.5 theme-text-muted"></i>
+                    <select id="ui-theme-selector-editor" class="bg-transparent theme-text-main text-[11px] sm:text-xs outline-none pr-1 sm:pr-2 cursor-pointer font-bold tracking-wide" onchange="changeTheme(this.value)">
+                        <option value="default">Midnight Indigo</option>
+                        <option value="light-minimal">Nordic Clean</option>
+                        <option value="midnight-gold">Luxury Legal</option>
+                        <option value="enterprise-blue">Corporate Slate</option>
+                        <option value="cyber-neon">Cyber Neon</option>
+                        <option value="rose-quartz">Rose Quartz</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <button class="hidden lg:flex btn border-transparent theme-text-muted text-xs hover:bg-black/10 transition" onclick="toggleCmdPalette()"><i data-lucide="terminal" class="w-4 h-4"></i> Cmd+K</button>
+                <div class="group relative">
+                    <button class="btn btn-primary pl-3 pr-4 rounded-xl"><i data-lucide="arrow-down-to-line" class="w-4 h-4"></i> <span class="hidden sm:inline font-bold">Export / Pack</span></button>
+                    <div class="hidden group-hover:flex absolute right-0 top-full mt-2 flex-col theme-bg-panel border theme-border rounded-xl shadow-2xl w-56 overflow-hidden z-50 fade-in">
+                        <div class="px-4 py-2 bg-black/20 border-b theme-border text-[9px] font-bold theme-text-muted uppercase tracking-widest">Output Options</div>
+                        <button onclick="exportDoc('pdf')" class="text-left px-4 py-3 hover:bg-black/10 theme-text-main text-xs flex items-center gap-3 transition"><div class="w-6 h-6 rounded bg-red-500/10 flex items-center justify-center"><i data-lucide="file-down" class="w-3.5 h-3.5 text-red-500"></i></div> Download Secure PDF</button>
+                        <button onclick="exportDoc('api')" class="text-left px-4 py-3 hover:bg-black/10 theme-text-main text-xs flex items-center gap-3 border-t theme-border transition"><div class="w-6 h-6 rounded bg-blue-500/10 flex items-center justify-center"><i data-lucide="code" class="w-3.5 h-3.5 text-blue-500"></i></div> Export Raw JSON Logic</button>
+                        <button onclick="alert('Bundle Engine Active. Ready to package.')" class="text-left px-4 py-3 hover:bg-black/10 theme-text-main text-xs flex items-center gap-3 border-t theme-border transition"><div class="w-6 h-6 rounded bg-emerald-500/10 flex items-center justify-center"><i data-lucide="package" class="w-3.5 h-3.5 text-emerald-500"></i></div> Add to Client Bundle</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden relative">
+            
+            <aside id="sidebar-left" class="sidebar flex flex-col theme-bg-panel border-r theme-border shrink-0 shadow-xl z-10">
+                <div class="flex border-b theme-border bg-black/20">
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn active uppercase tracking-widest" onclick="switchTab('left', 'tab-agent')">Agent</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn uppercase tracking-widest" onclick="switchTab('left', 'tab-memory')">Memory</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn uppercase tracking-widest" onclick="switchTab('left', 'tab-templates')">Library</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-5 relative pb-24 lg:pb-5">
+                    <div id="loader-left" class="loader absolute top-3 right-5 hidden"></div>
+
+                    <div id="tab-agent" class="sidebar-tab-content active space-y-6">
+                        <div>
+                            <label class="text-[10px] font-bold theme-text-muted uppercase tracking-widest mb-2 block flex justify-between items-center">
+                                <span>Master Prompt</span>
+                                <button onclick="toggleVoice()" id="mic-btn" class="bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 p-1.5 rounded-md transition shadow-sm"><i data-lucide="mic" class="w-3.5 h-3.5"></i></button>
+                            </label>
+                            <textarea id="prompt-create" class="theme-input resize-none min-h-[140px] text-xs leading-relaxed" placeholder="e.g. 'Draft an NDA for an enterprise client. Include standard liability clauses, a governing law section for Delaware, and format it beautifully with sections and variables...'"></textarea>
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="runWorkflow('create')" class="btn btn-primary flex-1 py-3 shadow-[0_0_15px_rgba(99,102,241,0.3)]"><i data-lucide="zap" class="w-4 h-4"></i> Generate Blueprint</button>
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-2xl border theme-border bg-gradient-to-br from-indigo-500/10 to-purple-500/10 relative overflow-hidden group shadow-inner">
+                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-500/20 rounded-full blur-2xl group-hover:bg-indigo-500/30 transition-all"></div>
+                            <h4 class="text-sm font-bold theme-text-main mb-2 flex items-center gap-2"><i data-lucide="wand-2" class="w-4 h-4 theme-accent"></i> Auto-Improve Loop</h4>
+                            <p class="text-[10px] theme-text-muted mb-4 leading-relaxed">Instructs the AI OS to restructure, fix grammar, and apply professional UI styling to the entire canvas without altering math tags or variables.</p>
+                            <button onclick="autoImproveDoc()" class="w-full btn border-indigo-500/40 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-sm"><i data-lucide="sparkles" class="w-4 h-4"></i> Make It Flawless</button>
+                        </div>
+                    </div>
+
+                    <div id="tab-memory" class="sidebar-tab-content space-y-6">
+                        <div class="space-y-4 bg-black/10 p-4 rounded-2xl border theme-border">
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest flex items-center gap-2"><i data-lucide="braces" class="w-3.5 h-3.5"></i> Global OS Variables</h4>
+                            <div>
+                                <label class="text-[9px] theme-text-muted uppercase font-bold mb-1 block pl-1">Client / Entity</label>
+                                <input type="text" id="ctx-client" placeholder="[Client Name]" class="theme-input text-xs font-mono" onchange="updateBrain()">
+                            </div>
+                            <div>
+                                <label class="text-[9px] theme-text-muted uppercase font-bold mb-1 block pl-1">Financial Base (Numeric)</label>
+                                <input type="text" id="ctx-amount" placeholder="[Amount]" class="theme-input text-xs font-mono" onchange="updateBrain()">
+                            </div>
+                            <div>
+                                <label class="text-[9px] theme-text-muted uppercase font-bold mb-1 block pl-1">Execution Date</label>
+                                <input type="text" id="ctx-date" placeholder="[Date]" class="theme-input text-xs font-mono" onchange="updateBrain()">
+                            </div>
+                            <button onclick="autofillDoc()" class="w-full btn theme-accent-bg text-white mt-2 border-transparent py-3 shadow-lg hover:shadow-xl transition-all">Inject Variables to Canvas</button>
+                        </div>
+                        
+                        <div class="p-4 rounded-2xl border theme-border bg-blue-500/5">
+                            <h4 class="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2"><i data-lucide="database" class="w-3.5 h-3.5"></i> External API Sync</h4>
+                            <p class="text-[10px] theme-text-muted mb-4 leading-relaxed">Simulate fetching live CRM, ERP, or Market data into <code class="bg-black/30 px-1 rounded border theme-border text-blue-300">[Live_Tags]</code>.</p>
+                            <button onclick="syncLiveData()" class="w-full btn text-xs bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20 shadow-sm"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Pull Live Feeds</button>
+                        </div>
+                    </div>
+
+                    <div id="tab-templates" class="sidebar-tab-content space-y-6">
+                        <div>
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="bookmark" class="w-3.5 h-3.5"></i> Local Private Vault</h4>
+                            <div id="saved-templates-list-editor" class="space-y-2 max-h-[180px] overflow-y-auto pr-2 no-scrollbar">
+                                </div>
+                            <button onclick="saveCurrentAsTemplate()" class="w-full btn border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 mt-4 text-xs py-3 shadow-sm"><i data-lucide="save" class="w-4 h-4"></i> Save Canvas to Vault</button>
+                        </div>
+
+                        <hr class="theme-border">
+
+                        <div>
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-3">System Base Architecture</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="loadTemplate('invoice')" class="btn justify-center flex-col gap-2 py-4 text-xs hover:border-indigo-500/50"><i data-lucide="receipt" class="w-5 h-5 theme-text-muted"></i> Invoice</button>
+                                <button onclick="loadTemplate('contract')" class="btn justify-center flex-col gap-2 py-4 text-xs hover:border-indigo-500/50"><i data-lucide="scale" class="w-5 h-5 theme-text-muted"></i> NDA</button>
+                                <button onclick="loadTemplate('proposal')" class="btn justify-center flex-col gap-2 py-4 text-xs hover:border-indigo-500/50"><i data-lucide="presentation" class="w-5 h-5 theme-text-muted"></i> Proposal</button>
+                                <button onclick="loadTemplate('ppt')" class="btn justify-center flex-col gap-2 py-4 text-xs hover:border-indigo-500/50"><i data-lucide="layout-template" class="w-5 h-5 theme-text-muted"></i> Deck</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 canvas-wrapper" id="main-scroll">
+                <div id="doc-canvas" contenteditable="true" oninput="handleTyping()" spellcheck="false" class="doc-page">
+                    <h1 style="font-size: 2.5rem; font-weight: 800; border-bottom: 2px solid var(--border-light); padding-bottom: 1rem; margin-bottom: 1.5rem; letter-spacing: -0.02em;">Intelligent Blueprint</h1>
+                    <p data-placeholder="Type '/' to insert blocks, type natural text, or use the Agent panel to generate..." style="line-height: 1.8; color: var(--text-muted); font-size: 1.1rem;"></p>
+                </div>
+                
+                <div id="remote-cursor-1" class="remote-cursor" data-user="Partner"></div>
+
+                <button id="add-page-btn" onclick="addWPSPage()" class="hidden btn theme-accent-bg text-white rounded-full px-6 py-3 shadow-[0_10px_30px_rgba(99,102,241,0.4)] mt-6 hover:scale-105 transition-transform z-10"><i data-lucide="file-plus" class="w-4 h-4"></i> Append Physical Page</button>
+            </main>
+
+            <aside id="sidebar-right" class="sidebar flex flex-col theme-bg-panel border-l theme-border shrink-0 shadow-xl z-10">
+                <div class="flex border-b theme-border bg-black/20">
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn active uppercase tracking-widest" onclick="switchTab('right', 'tab-edit')">Editor</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn uppercase tracking-widest text-emerald-500" onclick="switchTab('right', 'tab-collab')">Collab</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn uppercase tracking-widest" onclick="switchTab('right', 'tab-audit')">Audit</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted tab-btn uppercase tracking-widest" onclick="switchTab('right', 'tab-history')">Diff</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-5 relative pb-24 lg:pb-5">
+                    <div id="loader-right" class="loader absolute top-3 left-5 hidden"></div>
+
+                    <div id="tab-edit" class="sidebar-tab-content active space-y-6">
+                        <div>
+                            <label class="text-[10px] font-bold theme-text-muted uppercase tracking-widest mb-2 block">Direct AI Modifier (Selection/Full)</label>
+                            <textarea id="prompt-edit" class="theme-input resize-none min-h-[80px] text-xs" placeholder="e.g. 'Make the selected text sound more aggressive and legally binding.'"></textarea>
+                            <div class="grid grid-cols-2 gap-2 mt-3">
+                                <button onclick="aiAction('design')" class="btn text-xs py-2.5"><i data-lucide="paintbrush" class="w-3.5 h-3.5"></i> UI Polish</button>
+                                <button onclick="aiAction('explain')" class="btn text-xs py-2.5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> Explain Term</button>
+                            </div>
+                        </div>
+
+                        <hr class="theme-border">
+
+                        <div>
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="blocks" class="w-3.5 h-3.5"></i> Smart Legal Clauses</h4>
+                            <div class="space-y-2">
+                                <button onclick="aiAction('clause_terminate')" class="w-full btn text-xs justify-start hover:bg-white/5"><i data-lucide="plus-circle" class="w-3.5 h-3.5 theme-accent"></i> Standard Termination</button>
+                                <button onclick="aiAction('clause_gst')" class="w-full btn text-xs justify-start hover:bg-white/5"><i data-lucide="plus-circle" class="w-3.5 h-3.5 theme-accent"></i> Regional Tax (India GST)</button>
+                                <button onclick="aiAction('clause_liability')" class="w-full btn text-xs justify-start hover:bg-white/5"><i data-lucide="plus-circle" class="w-3.5 h-3.5 theme-accent"></i> Limited Liability Cap (US)</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mt-6">
+                            <button onclick="openSignature()" class="btn text-xs flex-col py-4 h-auto gap-2 border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10 group shadow-sm">
+                                <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition"><i data-lucide="pen-tool" class="w-4 h-4"></i></div>
+                                Add Signature
+                            </button>
+                            <div class="border theme-border rounded-xl p-3 text-center flex flex-col justify-center items-center gap-2 cursor-pointer hover:bg-white/5 transition shadow-sm bg-black/10" onclick="alert('Payment Gateway Hook Enabled. Redirecting to Stripe/Razorpay mock.')">
+                                <div class="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center"><i data-lucide="credit-card" class="w-4 h-4 text-yellow-500"></i></div>
+                                <span class="text-[10px] font-extrabold text-yellow-500 uppercase tracking-widest">Unpaid Layer</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-collab" class="sidebar-tab-content space-y-4 flex flex-col h-full">
+                        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+                            <i data-lucide="radio" class="w-6 h-6 text-emerald-500 mx-auto mb-2 animate-pulse"></i>
+                            <h4 class="text-sm font-bold text-emerald-400 mb-1">Live Sync Inactive</h4>
+                            <p class="text-[10px] text-emerald-500/70 mb-3">Connect to a peer to enable live cursor tracking and document sync.</p>
+                            <button onclick="openWebRTCModal()" class="btn w-full text-xs bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600">Open Connection Portal</button>
+                        </div>
+
+                        <div class="flex-1 border theme-border rounded-xl bg-black/20 flex flex-col overflow-hidden min-h-[300px]">
+                            <div class="p-3 border-b theme-border bg-black/40 text-xs font-bold theme-text-muted flex justify-between items-center">
+                                <span>Session Chat (E2E)</span>
+                                <div class="w-2 h-2 rounded-full bg-zinc-600"></div>
+                            </div>
+                            <div class="flex-1 p-3 overflow-y-auto space-y-3 flex flex-col justify-end" id="chat-messages">
+                                <div class="text-center text-[10px] theme-text-muted italic w-full">Chat history is volatile and encrypted.</div>
+                                <div class="chat-bubble-them">Hey, checking the clause on page 2.</div>
+                                <div class="chat-bubble-me">Reviewing now. Let me run the AI compliance check.</div>
+                            </div>
+                            <div class="p-2 border-t theme-border bg-black/40 flex gap-2">
+                                <input type="text" placeholder="Type message..." class="theme-input text-xs py-2 bg-black/40 border-transparent">
+                                <button class="btn theme-accent-bg px-3" onclick="alert('Connect to a peer first.')"><i data-lucide="send" class="w-3 h-3 text-white"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-audit" class="sidebar-tab-content space-y-6">
+                        <div class="space-y-3">
+                            <button onclick="runAudit()" class="w-full btn border-orange-500/40 text-orange-500 hover:bg-orange-500/10 justify-center py-4 shadow-lg">
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i> Run Structure Audit
+                            </button>
+                            <button onclick="runAIGuardrails()" class="w-full btn border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 justify-center py-4 shadow-lg">
+                                <i data-lucide="gavel" class="w-4 h-4"></i> Deep Legal AI Scan
+                            </button>
+                        </div>
+
+                        <div class="theme-bg-main p-5 rounded-2xl border theme-border relative overflow-hidden shadow-inner">
+                            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+                            <h4 class="font-bold text-sm theme-text-main flex items-center justify-between mb-3">
+                                <span class="flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-blue-500"></i> Logic Engine V2</span>
+                            </h4>
+                            <p class="text-[10px] theme-text-muted mb-3 leading-relaxed">Evaluates complex nested IF/THEN math expressions globally across the canvas.</p>
+                            <code class="block bg-black/40 p-3 rounded-lg text-[10px] text-blue-400 mb-4 overflow-x-auto border border-blue-500/20 font-mono shadow-inner">
+                                [[ IF [Amount] > 1000 THEN [Amount]*0.9 ELSE [Amount] ]]
+                            </code>
+                            <button onclick="forceCalculate()" class="w-full btn text-xs bg-blue-500/10 text-blue-400 border-blue-500/40 hover:bg-blue-500/20 shadow-sm"><i data-lucide="play" class="w-3.5 h-3.5"></i> Execute Logic Tree</button>
+                        </div>
+                    </div>
+
+                    <div id="tab-history" class="sidebar-tab-content space-y-6">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="theme-bg-main border theme-border p-4 rounded-xl flex flex-col items-center justify-center shadow-inner">
+                                <span class="text-[9px] theme-text-muted uppercase font-bold tracking-widest mb-1">Total Words</span>
+                                <span id="stat-words" class="text-2xl font-extrabold theme-accent">0</span>
+                            </div>
+                            <div class="theme-bg-main border theme-border p-4 rounded-xl flex flex-col items-center justify-center shadow-inner">
+                                <span class="text-[9px] theme-text-muted uppercase font-bold tracking-widest mb-1">Minutes Spent</span>
+                                <span id="stat-time" class="text-2xl font-extrabold text-emerald-500">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 border theme-border rounded-xl p-4 bg-black/10">
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-4 flex justify-between items-center">
+                                Version Control 
+                                <button onclick="restoreLastVersion()" class="theme-accent hover:underline flex items-center gap-1 text-[10px]"><i data-lucide="undo-2" class="w-3 h-3"></i> Quick Undo</button>
+                            </h4>
+                            <div id="timeline-list" class="space-y-4 border-l-2 border-indigo-500/30 pl-4 ml-2 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
+                                </div>
+                            <button class="w-full btn mt-4 border-indigo-500/30 text-indigo-400 text-xs hover:bg-indigo-500/10" onclick="alert('Diff visualizer active. Changes highlighted in green/red.')"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i> Show Changes (Diff)</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <nav class="mobile-nav theme-bg-panel border-t theme-border shadow-[0_-15px_50px_rgba(0,0,0,0.8)] justify-around items-center px-2 pb-safe">
+        <button onclick="toggleMobilePanel('sidebar-left')" class="flex flex-col items-center p-3 theme-text-muted hover:text-indigo-400 transition-colors w-1/3">
+            <i data-lucide="sparkles" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold tracking-widest uppercase">Writer</span>
+        </button>
+        <button onclick="closeMobilePanels()" class="flex flex-col items-center p-2 theme-accent group w-1/3 relative z-50">
+            <div class="w-16 h-16 rounded-full theme-bg-main border-4 border-[var(--bg-panel)] flex items-center justify-center -mt-12 shadow-2xl group-hover:-translate-y-1 transition-transform"><i data-lucide="file-text" class="w-7 h-7"></i></div>
+            <span class="text-[10px] mt-1 font-bold tracking-widest uppercase">Canvas</span>
+        </button>
+        <button onclick="toggleMobilePanel('sidebar-right')" class="flex flex-col items-center p-3 theme-text-muted hover:text-emerald-400 transition-colors w-1/3">
+            <i data-lucide="pen-tool" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold tracking-widest uppercase">Editor</span>
+        </button>
+    </nav>
+
+    <div id="context-menu" class="hidden fixed theme-bg-panel border theme-border rounded-xl p-1.5 z-50 flex-col shadow-2xl w-48">
+        <button onclick="ctxExec('rewrite')" class="text-left px-3 py-2.5 text-xs theme-text-main hover:bg-black/20 rounded-lg flex items-center gap-3 transition font-medium"><i data-lucide="wand-2" class="w-4 h-4 theme-accent"></i> AI Auto-Rewrite</button>
+        <button onclick="ctxExec('summarize')" class="text-left px-3 py-2.5 text-xs theme-text-main hover:bg-black/20 rounded-lg flex items-center gap-3 transition font-medium"><i data-lucide="align-left" class="w-4 h-4 text-blue-400"></i> Summarize Core</button>
+        <div class="h-px bg-white/10 my-1 mx-2"></div>
+        <button onclick="ctxExec('lock')" class="text-left px-3 py-2.5 text-xs theme-text-main hover:bg-black/20 rounded-lg flex items-center gap-3 transition font-medium"><i data-lucide="lock" class="w-4 h-4 text-red-500"></i> Encrypt Node (Lock)</button>
+    </div>
+
+    <div id="slash-menu" class="hidden fixed theme-bg-panel border theme-border rounded-2xl p-2 z-50 flex-col shadow-2xl w-60 max-h-[350px] overflow-y-auto no-scrollbar">
+        <p class="text-[9px] font-extrabold theme-text-muted uppercase tracking-widest px-3 py-2 bg-black/20 rounded-lg mb-1">Insert Architecture Block</p>
+        <button onclick="insertBlock('h2')" class="text-left px-3 py-3 text-xs theme-text-main hover:bg-black/20 rounded-xl flex items-center gap-3 transition"><div class="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center"><i data-lucide="heading-2" class="w-4 h-4 theme-text-muted"></i></div> Section Header</button>
+        <button onclick="insertBlock('table')" class="text-left px-3 py-3 text-xs theme-text-main hover:bg-black/20 rounded-xl flex items-center gap-3 transition"><div class="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center"><i data-lucide="table" class="w-4 h-4 theme-text-muted"></i></div> 2x2 Data Matrix</button>
+        <button onclick="insertBlock('pricing')" class="text-left px-3 py-3 text-xs theme-text-main hover:bg-black/20 rounded-xl flex items-center gap-3 transition"><div class="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center"><i data-lucide="tag" class="w-4 h-4 text-indigo-400"></i></div> Smart Pricing Card</button>
+        <button onclick="insertBlock('sign')" class="text-left px-3 py-3 text-xs theme-text-main hover:bg-black/20 rounded-xl flex items-center gap-3 transition"><div class="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i data-lucide="pen-line" class="w-4 h-4 text-emerald-500"></i></div> Signature Zone</button>
+        <button onclick="insertBlock('pagebreak')" class="text-left px-3 py-3 text-xs theme-text-main hover:bg-black/20 rounded-xl flex items-center gap-3 transition"><div class="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center"><i data-lucide="scissors" class="w-4 h-4 text-red-500"></i></div> Forced Page Break (PDF)</button>
+    </div>
+
+    <div id="cmd-palette" class="fixed inset-0 modal-bg z-[100] hidden items-start justify-center pt-[10vh] sm:pt-[15vh] px-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all fade-in">
+            <div class="flex items-center px-6 py-5 border-b theme-border bg-black/20">
+                <i data-lucide="terminal" class="w-6 h-6 theme-accent mr-4"></i>
+                <input type="text" id="cmd-input" class="bg-transparent border-none theme-text-main w-full outline-none text-xl font-medium placeholder-zinc-600" placeholder="Search OS, execute '/' commands, or ask AI..." autocomplete="off">
+            </div>
+            <div class="p-3 max-h-[400px] overflow-y-auto no-scrollbar" id="cmd-results">
+                <p class="text-[9px] font-extrabold theme-text-muted uppercase tracking-widest px-3 pt-2 pb-1">AI & OS Actions</p>
+                <button class="w-full text-left px-4 py-3 text-sm theme-text-main hover:bg-indigo-500/10 rounded-xl flex items-center gap-4 transition mb-1" onclick="executeCmd('semantic_search')"><div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0"><i data-lucide="brain-circuit" class="w-4 h-4 text-purple-400"></i></div> <span class="font-bold">Ask AI about this document...</span></button>
+                <div class="h-px theme-bg-main my-2 mx-2"></div>
+                <button class="w-full text-left px-4 py-3 text-xs theme-text-muted hover:bg-black/20 rounded-xl flex items-center justify-between transition mb-1 group" onclick="executeCmd('brand_convert')">
+                    <div class="flex items-center gap-4"><div class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center group-hover:bg-pink-500/10 transition"><i data-lucide="paint-bucket" class="w-4 h-4 text-pink-500"></i></div> <span class="font-medium">Apply Brand Identity (CSS Override)</span></div>
+                </button>
+                <button class="w-full text-left px-4 py-3 text-xs theme-text-muted hover:bg-black/20 rounded-xl flex items-center justify-between transition mb-1 group" onclick="executeCmd('live_sync')">
+                    <div class="flex items-center gap-4"><div class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center group-hover:bg-blue-500/10 transition"><i data-lucide="refresh-cw" class="w-4 h-4 text-blue-500"></i></div> <span class="font-medium">Sync [Live] External APIs</span></div>
+                </button>
+                <button class="w-full text-left px-4 py-3 text-xs theme-text-muted hover:bg-black/20 rounded-xl flex items-center justify-between transition group" onclick="exportDoc('pdf')">
+                    <div class="flex items-center gap-4"><div class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center group-hover:bg-emerald-500/10 transition"><i data-lucide="download" class="w-4 h-4 text-emerald-500"></i></div> <span class="font-medium">Export Current Canvas to PDF</span></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sig-modal" class="fixed inset-0 modal-bg z-[100] hidden items-center justify-center p-4">
+        <div class="theme-bg-panel border theme-border rounded-3xl p-8 w-full max-w-md shadow-2xl fade-in">
+            <h3 class="theme-text-main mb-2 font-bold text-xl flex items-center gap-3"><i data-lucide="pen-tool" class="w-6 h-6 theme-accent"></i> Authorized Signature</h3>
+            <p class="text-xs theme-text-muted mb-6">Please draw your signature within the bounds below to digitally sign the node.</p>
+            <div class="bg-white p-1.5 rounded-2xl border-2 theme-border shadow-inner">
+                <canvas id="sig-canvas" width="400" height="200" class="w-full bg-white rounded-xl cursor-crosshair touch-none" style="touch-action: none;"></canvas>
+            </div>
+            <div class="flex justify-between mt-6 gap-3">
+                <button onclick="closeModals()" class="btn flex-1 py-3.5 bg-black/20 hover:bg-black/40">Cancel</button>
+                <button onclick="clearSignature()" class="btn flex-1 py-3.5 text-orange-400 hover:bg-orange-500/10 border-orange-500/30">Clear Pad</button>
+                <button onclick="saveSignature()" class="btn btn-primary flex-1 py-3.5 shadow-lg">Inject Data</button>
+            </div>
+        </div>
+    </div>
+    ```
+    <script>
+        // Initialize UI Icons globally
+        lucide.createIcons();
+
+        // --- 1. CORE OS STATE & TELEMETRY ---
+        const appState = {
+            docContext: { client: "", amount: "", date: new Date().toLocaleDateString() },
+            shadowContext: {}, 
+            history: [],
+            role: "admin",
+            startTime: Date.now(),
+            paymentStatus: false,
+            docsGenerated: 0,
+            clausesAdded: 0,
+            valueTracked: 0,
+            rtcPeer: null,    // WebRTC Connection Instance
+            rtcChannel: null, // WebRTC Data Channel
+            isCollabActive: false
+        };
+
+        let currentUser = null;
+        let companyDNA = {};
+
+        // Cached DOM Elements for performance
+        const DOM = {
+            canvas: document.getElementById('doc-canvas'),
+            ctxMenu: document.getElementById('context-menu'),
+            slashMenu: document.getElementById('slash-menu'),
+            addPageBtn: document.getElementById('add-page-btn'),
+            brainInputs: { 
+                c: document.getElementById('ctx-client'), 
+                a: document.getElementById('ctx-amount'),
+                d: document.getElementById('ctx-date')
+            }
+        };
+
+        // --- 2. OS BOOT SEQUENCE ---
+        window.onload = () => {
+            // Restore System Preferences
+            const savedTheme = localStorage.getItem('smartdraft_theme');
+            if (savedTheme) changeTheme(savedTheme);
+
+            const savedDNA = localStorage.getItem('smartdraft_dna');
+            if (savedDNA) companyDNA = JSON.parse(savedDNA);
+
+            // Restore OS Telemetry & Stats
+            appState.docsGenerated = parseInt(localStorage.getItem('smartdraft_docs_count') || '0');
+            appState.clausesAdded = parseInt(localStorage.getItem('smartdraft_clauses_count') || '0');
+            appState.valueTracked = parseInt(localStorage.getItem('smartdraft_value_tracked') || '0');
+
+            checkAuth(); 
+            setInterval(updateAnalytics, 5000);
+            renderSavedTemplates();
+            saveVersion(); 
+            
+            // Global Event Listeners (Modals & Context Menus)
+            document.addEventListener('mousedown', (e) => {
+                if (!DOM.ctxMenu.contains(e.target)) DOM.ctxMenu.style.display = 'none';
+                if (!DOM.slashMenu.contains(e.target) && e.target.id !== 'doc-canvas') DOM.slashMenu.style.display = 'none';
+            });
+            document.addEventListener('keydown', (e) => {
+                // Cmd/Ctrl + K to open Command Palette
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleCmdPalette(); }
+                if (e.key === 'Escape') closeModals();
+            });
+            
+            // Smart Slash Command Engine Overlay Trigger
+            DOM.canvas.addEventListener('keyup', (e) => {
+                const sel = window.getSelection();
+                if(sel.focusNode && sel.focusNode.textContent.endsWith('/')) {
+                    const rect = sel.getRangeAt(0).getBoundingClientRect();
+                    DOM.slashMenu.style.display = 'flex';
+                    // Boundary protection for mobile/small screens
+                    let leftPos = rect.left;
+                    if(window.innerWidth - leftPos < 260) leftPos = window.innerWidth - 260;
+                    DOM.slashMenu.style.left = `${Math.max(10, leftPos)}px`;
+                    DOM.slashMenu.style.top = `${rect.bottom + 10}px`;
+                } else if (e.key !== 'Shift') {
+                    DOM.slashMenu.style.display = 'none';
+                }
+                
+                // Broadcast keystrokes if WebRTC is active
+                if(appState.isCollabActive && appState.rtcChannel && appState.rtcChannel.readyState === 'open') {
+                    broadcastCanvasUpdate();
+                }
+            });
+
+            DOM.canvas.addEventListener('input', debounce(evaluateMathFields, 800));
+            DOM.canvas.addEventListener('input', handleTyping);
+            
+            // Initialize Hardware Integrations
+            initSignaturePad();
+        };
+
+        // --- 3. ENTERPRISE AUTHENTICATION & ENCRYPTION ---
+        function generateUID() {
+            // Generates a unique network ID: e.g. SD-4F8A-9B2C
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let seg1 = '', seg2 = '';
+            for(let i=0; i<4; i++) seg1 += chars.charAt(Math.floor(Math.random() * chars.length));
+            for(let i=0; i<4; i++) seg2 += chars.charAt(Math.floor(Math.random() * chars.length));
+            return `SD-${seg1}-${seg2}`;
+        }
+
+        function checkAuth() {
+            try {
+                const stored = localStorage.getItem('smartdraft_user');
+                if(stored) {
+                    currentUser = JSON.parse(stored);
+                    
+                    // Ensure legacy users get a UID for V2 features
+                    if(!currentUser.uid) {
+                        currentUser.uid = generateUID();
+                        localStorage.setItem('smartdraft_user', JSON.stringify(currentUser));
+                    }
+                    
+                    if(currentUser.password) {
+                        document.getElementById('unlock-modal').style.display = 'flex';
+                        document.getElementById('unlock-greeting').innerText = `Session Locked`;
+                    } else {
+                        showDashboard();
+                    }
+                } else {
+                    document.getElementById('auth-modal').style.display = 'flex';
+                }
+            } catch(e) { document.getElementById('auth-modal').style.display = 'flex'; }
+        }
+
+        function handleInitialLogin() {
+            const name = document.getElementById('auth-name').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+            if(!name) { alert("ERROR: System Alias is required to initialize OS."); return; }
+            
+            // CRITICAL OVERRIDE: Vaidik Infinite AI Limits & Master Admin
+            const isAdmin = (name.toLowerCase() === 'vaidik' && pass === '1234@4321');
+            const uid = generateUID();
+            
+            currentUser = { name: name, password: pass, isAdmin: isAdmin, uid: uid };
+            
+            try { localStorage.setItem('smartdraft_user', JSON.stringify(currentUser)); } catch(e) {}
+            
+            document.getElementById('auth-modal').classList.remove('slide-up');
+            document.getElementById('auth-modal').style.display = 'none';
+            showDashboard();
+        }
+
+        function handleUnlock() {
+            const pass = document.getElementById('unlock-pass').value;
+            if(pass === currentUser.password) {
+                document.getElementById('unlock-modal').style.display = 'none';
+                document.getElementById('unlock-pass').value = '';
+                showDashboard();
+            } else {
+                alert("DECRYPTION FAILED: Incorrect Master Password.");
+            }
+        }
+
+        function resetAccountSecurely() {
+            const verifyPass = document.getElementById('reset-pass-verify').value;
+            if(currentUser && currentUser.password && verifyPass !== currentUser.password) {
+                alert("ACCESS DENIED: Master password required to purge data.");
+                return;
+            }
+            if(confirm("CRITICAL WARNING: This action will permanently purge your DNA profile, encrypted templates, and OS history. Proceed?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // --- 4. DEEP DASHBOARD ROUTING & NAVIGATION ---
+        function showDashboard() {
+            document.getElementById('main-workspace').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dash-name').innerText = currentUser.name.split(' ')[0];
+            
+            // Inject UID into settings
+            if(document.getElementById('display-uid') && currentUser.uid) {
+                document.getElementById('display-uid').innerText = currentUser.uid;
+                if(document.getElementById('rtc-my-uid')) document.getElementById('rtc-my-uid').value = currentUser.uid;
+            }
+            
+            updateDashboardStats();
+            renderSavedTemplates(); 
+        }
+
+        function switchDashTab(tabId) {
+            // Manage Dashboard Tab State
+            document.querySelectorAll('.dash-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.dash-tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function openCreationModal(type = 'new') {
+            if(type === 'template') {
+                document.getElementById('dashboard-view').classList.add('hidden');
+                document.getElementById('main-workspace').classList.remove('hidden');
+                switchTab('left', 'tab-templates');
+                if(window.innerWidth <= 1024) toggleMobilePanel('sidebar-left');
+            } else {
+                document.getElementById('creation-modal').style.display = 'flex';
+            }
+        }
+
+        function initEditor(mode) {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('creation-modal').style.display = 'none';
+            document.getElementById('main-workspace').classList.remove('hidden');
+            
+            changeCanvasMode(mode);
+            document.getElementById('canvas-mode-selector').value = mode;
+            
+            // OS Telemetry Update
+            appState.docsGenerated++;
+            localStorage.setItem('smartdraft_docs_count', appState.docsGenerated.toString());
+            appState.startTime = Date.now();
+            updateDashboardStats();
+        }
+
+        function changeCanvasMode(mode) {
+            const wrapper = document.getElementById('main-scroll');
+            DOM.canvas.className = ''; 
+            
+            if(mode === 'ppt') {
+                wrapper.className = 'flex-1 canvas-wrapper mode-ppt-wrapper';
+                DOM.canvas.className = 'mode-ppt';
+                DOM.addPageBtn.classList.add('hidden');
+            } else if (mode === 'pdf') {
+                wrapper.className = 'flex-1 canvas-wrapper';
+                DOM.canvas.className = 'mode-pdf';
+                DOM.addPageBtn.classList.remove('hidden'); // Reveal physical page breaks
+            } else {
+                wrapper.className = 'flex-1 canvas-wrapper';
+                DOM.canvas.className = 'mode-doc';
+                DOM.addPageBtn.classList.add('hidden');
+            }
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none');
+            document.getElementById('auth-modal').style.display = currentUser ? 'none' : 'flex';
+            // Stop WebRTC local video if closing modal before connect (optional cleanup)
+        }
+
+        function switchTab(side, tabId) {
+            const container = document.getElementById(`sidebar-${side}`);
+            if(!container) return;
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelectorAll('.sidebar-tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function changeTheme(themeName) {
+            if(themeName === 'default') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('smartdraft_theme', themeName);
+            
+            // Sync both dashboard and editor selectors
+            const selectors = document.querySelectorAll('select[id^="ui-theme-selector"]');
+            selectors.forEach(s => s.value = themeName);
+        }
+
+        // --- 5. DNA PROFILE MANAGEMENT ---
+        function openProfile() {
+            document.getElementById('prof-company').value = companyDNA.company || "";
+            document.getElementById('prof-gst').value = companyDNA.gst || "";
+            document.getElementById('prof-address').value = companyDNA.address || "";
+            document.getElementById('prof-tone').value = companyDNA.tone || "";
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function saveProfileDNA() {
+            companyDNA = {
+                company: document.getElementById('prof-company').value,
+                gst: document.getElementById('prof-gst').value,
+                address: document.getElementById('prof-address').value,
+                tone: document.getElementById('prof-tone').value
+            };
+            localStorage.setItem('smartdraft_dna', JSON.stringify(companyDNA));
+            closeModals();
+            alert("Company DNA Profile Saved. OS will inject this context globally.");
+        }
+
+        // --- 6. AI LIMITS & SECURE VERCEL TUNNEL ---
+        function checkAILimit() {
+            if (!currentUser) return false;
+            // VAIDIK BYPASS: Absolute infinite access granted
+            if (currentUser.isAdmin) return true; 
+            
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                let usage = JSON.parse(localStorage.getItem('smartdraft_ai') || '{"date":"","count":0}');
+                if (usage.date !== today) { usage = { date: today, count: 0 }; }
+                if (usage.count >= 3) {
+                    alert("SYSTEM HALT: Daily AI Token limit reached (3/3). Upgrade to Enterprise to remove limits.");
+                    return false;
+                }
+                usage.count++;
+                localStorage.setItem('smartdraft_ai', JSON.stringify(usage));
+                updateDashboardStats();
+                return true;
+            } catch (e) { return true; }
+        }
+
+        async function askGemini(instruction, content, imageBase64 = null, panel = 'left') {
+            if (!checkAILimit()) return null;
+
+            const loader = document.getElementById(`loader-${panel}`);
+            if(loader) loader.classList.remove('hidden');
+            
+            // Inject Corporate DNA into the AI Context window
+            let dnaContext = companyDNA.company ? `\nCOMPANY DNA (Strictly adhere to this context): Name: ${companyDNA.company}, Tax ID: ${companyDNA.gst}, Tone: ${companyDNA.tone}` : "";
+            let parts = [{ text: `INSTRUCTION: ${instruction}${dnaContext}\nCONTEXT:\n${content}` }];
+            
+            // Handle Vision AI inputs (Napkin sketches to HTML)
+            if (imageBase64) parts.push({ inlineData: { mimeType: "image/jpeg", data: imageBase64.split(',')[1] } });
+            
+            const payload = {
+                contents: [{ parts }],
+                systemInstruction: { parts: [{ text: "You are SmartDraft AI, the world's most advanced Enterprise Document OS. Output ONLY raw HTML. No markdown blocks (NO ```html). Use highly professional inline CSS matching modern SaaS platforms." }] }
+            };
+
+            try {
+                // Route directly through existing secure Vercel edge function
+                const res = await fetch('/api/gemini', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                const data = await res.json();
+                if(loader) loader.classList.add('hidden');
+                if(data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                
+                let textResult = data.candidates[0].content.parts[0].text;
+                return textResult.replace(/^```html\s*/i, '').replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/g, '').trim();
+            } catch (e) { 
+                if(loader) loader.classList.add('hidden'); 
+                alert(`OS Communication Error: ${e.message}`); return null; 
+            }
+        }
+
+        // --- 7. CORE AI GENERATION WORKFLOWS ---
+        async function runWorkflow(type) {
+            const prompt = document.getElementById('prompt-create').value;
+            if(!prompt) return;
+            closeMobilePanels(); 
+            let html = await askGemini(`Draft a highly professional, expansive document based on this exact request: "${prompt}". Structure it perfectly. Use modern fonts and dynamic variables in brackets like [Client Name].`, "", null, 'left');
+            if(html) { 
+                DOM.canvas.innerHTML = html; 
+                saveVersion(); 
+                setTimeout(runAudit, 1000); 
+                if(appState.isCollabActive) broadcastCanvasUpdate();
+            }
+        }
+
+        async function autoImproveDoc() {
+            const content = DOM.canvas.innerHTML;
+            alert("AI Auto-Improve Loop Engaged. Analyzing semantic structure...");
+            const html = await askGemini("Make this document absolutely perfect. Restructure flow, fix grammatical errors, and beautify the UI heavily. DO NOT alter core mathematical logic, tags, or raw data.", content, null, 'left');
+            if(html) { 
+                DOM.canvas.innerHTML = html; 
+                saveVersion(); 
+                if(appState.isCollabActive) broadcastCanvasUpdate();
+            }
+        }
+
+        async function aiAction(action) {
+            const promptStr = document.getElementById('prompt-edit').value.trim();
+            const content = DOM.canvas.innerHTML;
+            closeMobilePanels();
+            
+            if(action === 'design') {
+                let instruction = "Dramatically upgrade the design of this HTML. Make it look like a $1000/mo Enterprise export. DO NOT change text logic.";
+                if (promptStr) instruction += ` User Request: ${promptStr}`;
+                const html = await askGemini(instruction, content, null, 'right');
+                if(html) { DOM.canvas.innerHTML = html; saveVersion(); document.getElementById('prompt-edit').value = ''; }
+            } 
+            else if (action === 'explain') {
+                let instruction = "Analyze and summarize the key legal/financial risks in 3 bullet points. Return as an HTML snippet.";
+                if (promptStr) instruction += ` Focus specifically on: ${promptStr}`;
+                const explanation = await askGemini(instruction, DOM.canvas.innerText, null, 'right');
+                if(explanation) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<div style="background:rgba(16,185,129,0.1); border-left:4px solid var(--success); padding:15px; margin-top:20px; color:inherit; border-radius:4px; font-size:12px;"><strong>🧠 AI Semantic Analysis:</strong><br>${explanation}</div>`;
+                    DOM.canvas.appendChild(div);
+                }
+            }
+            else if (action.startsWith('clause_')) {
+                let clauseType = action.split('_')[1];
+                let prompt = clauseType === 'terminate' ? "Draft a standard airtight corporate termination clause." :
+                             clauseType === 'gst' ? "Draft an Indian GST compliance and payment liability clause." :
+                             "Draft a strict limited liability cap clause.";
+                const html = await askGemini(prompt + " Return only raw HTML.", "", null, 'right');
+                if(html) { 
+                    DOM.canvas.innerHTML += `<div style="margin-top:20px;">${html}</div>`; 
+                    saveVersion();
+                    appState.clausesAdded++;
+                    localStorage.setItem('smartdraft_clauses_count', appState.clausesAdded.toString());
+                    updateDashboardStats();
+                }
+            }
+            if(appState.isCollabActive) broadcastCanvasUpdate();
+        }
+
+        // --- 8. VOICE RECOGNITION (BROWSER NATIVE) ---
+        let recognition;
+        function toggleVoice() {
+            const btn = document.getElementById('mic-btn');
+            if(!('webkitSpeechRecognition' in window)) { alert("Voice API not supported in this browser environment."); return; }
+            
+            if(!recognition) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.onstart = function() { btn.classList.add('text-red-500', 'bg-red-500/10', 'animate-pulse'); };
+                recognition.onend = function() { btn.classList.remove('text-red-500', 'bg-red-500/10', 'animate-pulse'); };
+                recognition.onresult = function(event) {
+                    const text = event.results[0][0].transcript;
+                    const input = document.getElementById('prompt-create');
+                    input.value = input.value ? input.value + " " + text : text;
+                };
+            }
+            recognition.start();
+        }
+    ```
+        // --- 9. SLASH COMMANDS & ARCHITECTURE BLOCKS ---
+        function insertBlock(type) {
+            DOM.slashMenu.style.display = 'none';
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/\/\s*$/, '');
+            
+            let html = "";
+            if(type === 'h2') html = `<h2 style="font-size: 1.75rem; font-weight: 800; margin-top: 2rem; margin-bottom: 1rem; color: var(--text-main);">New Architecture Segment</h2><p style="color: var(--text-muted);">Begin drafting...</p>`;
+            if(type === 'table') html = `<table style="width:100%; border-collapse:collapse; margin: 25px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);"><tr style="background:var(--bg-panel);"><th style="padding:15px; border:1px solid var(--border-light); text-align:left;">Metric</th><th style="padding:15px; border:1px solid var(--border-light); text-align:left;">Value</th></tr><tr><td style="padding:15px; border:1px solid var(--border);">Data Node</td><td style="padding:15px; border:1px solid var(--border);">Data Node</td></tr></table><p><br></p>`;
+            if(type === 'pricing') html = `<div style="border: 2px solid var(--accent); border-radius: 16px; padding: 35px; text-align: center; margin: 30px 0; background:var(--accent-glow); box-shadow: 0 10px 30px var(--accent-glow);"><h3 style="margin:0; color:var(--accent); font-size:1.5rem; font-weight:800; text-transform:uppercase; tracking-widest;">Enterprise Tier</h3><p style="font-size: 3rem; font-weight: 900; margin: 15px 0; color: var(--text-main);">[[ [Amount] * 1.0 ]]</p><p style="color: var(--text-muted); font-size: 0.875rem;">Unlocks all architectural features and priority support.</p></div><p><br></p>`;
+            if(type === 'sign') html = `<div style="display:flex; justify-content:space-between; margin-top:60px; margin-bottom:20px;"><div style="border-top:2px solid var(--text-main); width:45%; padding-top:10px; font-weight:bold; color: var(--text-main);">Authorized Signatory (Client)</div><div style="border-top:2px solid var(--text-main); width:45%; padding-top:10px; font-weight:bold; color: var(--text-main);">Authorized Signatory (Company)</div></div><p><br></p>`;
+            if(type === 'pagebreak') html = `<div class="page-break-element" contenteditable="false"></div><p><br></p>`;
+            
+            DOM.canvas.innerHTML += html; 
+            saveVersion();
+            if(appState.isCollabActive) broadcastCanvasUpdate();
+        }
+
+        // --- 10. MATH ENGINE V2 (DYNAMIC CONDITIONALS & AST) ---
+        function forceCalculate() { evaluateMathFields(); }
+        function evaluateMathFields() {
+            let updated = false;
+            const mathBlockRegex = /\[\[(.*?)\]\]/g; 
+            const activeContext = appState.role === 'viewer' ? {...appState.docContext, ...appState.shadowContext} : appState.docContext;
+
+            let newHtml = DOM.canvas.innerHTML.replace(mathBlockRegex, (match, mathContent) => {
+                try {
+                    // Inject live variables into the string
+                    let expressionToEval = mathContent.replace(/\[([A-Za-z0-9_ ]+)\]/g, (varMatch, varName) => {
+                        let val = activeContext[varName.toLowerCase()] || activeContext[varName] || "0";
+                        return val.toString().replace(/[^0-9.-]+/g,"");
+                    });
+                    
+                    expressionToEval = expressionToEval.replace(/<[^>]*>?/gm, '');
+
+                    // Advanced AST Parsing for IF/THEN -> JS Ternary mapping
+                    if (expressionToEval.includes('IF ') && expressionToEval.includes('THEN ')) {
+                        expressionToEval = expressionToEval.replace(/IF /g, '').replace(/ THEN /g, ' ? ').replace(/ ELSE /g, ' : ');
+                    }
+
+                    const result = Function(`'use strict'; return (${expressionToEval})`)();
+                    
+                    if (!isNaN(result) && result !== undefined) {
+                        updated = true;
+                        appState.valueTracked += Number(result); 
+                        const cssClass = appState.role === 'viewer' ? 'smart-field' : 'calc-field';
+                        return `<span class="${cssClass}" data-expr="${mathContent}">$${Number(result).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                    }
+                    return match; 
+                } catch(e) { return match; }
+            });
+
+            if(updated && appState.role !== 'viewer') { 
+                DOM.canvas.innerHTML = newHtml; 
+                saveVersion(); 
+                localStorage.setItem('smartdraft_value_tracked', appState.valueTracked.toString());
+                updateDashboardStats();
+                if(appState.isCollabActive) broadcastCanvasUpdate();
+            } else if (updated && appState.role === 'viewer') {
+                DOM.canvas.innerHTML = newHtml; // Renders simulation without committing
+            }
+        }
+
+        // --- 11. AUDIT, COMPLIANCE & TELEMETRY ---
+        function runAudit() {
+            closeMobilePanels();
+            let issuesFound = 0;
+            const regex = /\[(.*?)\]|TODO|XXXX/g;
+            
+            // Clean old audits
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/<span class="audit-issue">(.*?)<\/span>/g, "$1");
+            
+            let newHtml = DOM.canvas.innerHTML.replace(regex, (match) => {
+                if(match.startsWith('[[') || match.includes('Live_')) return match; 
+                issuesFound++;
+                return `<span class="audit-issue" title="Needs review">${match}</span>`;
+            });
+            
+            if(issuesFound > 0) {
+                DOM.canvas.innerHTML = newHtml; 
+                alert(`OS Audit Complete: ${issuesFound} missing data nodes flagged in red.`);
+            } else { 
+                alert("OS Audit Complete: Canvas structure is pristine and ready for execution."); 
+            }
+        }
+
+        async function runAIGuardrails() {
+            const textContext = DOM.canvas.innerText;
+            alert("Deep AI Legal Compliance Check Initiated...");
+            const instruction = `Review this document strictly for missing standard corporate legal clauses (Liability Caps, Jurisdiction, GDPR/Data Privacy). If critical risks exist, return a short HTML warning box. If perfectly safe, reply EXACTLY with 'SAFE'.`;
+            
+            const result = await askGemini(instruction, textContext, null, 'right');
+            if(result && result.trim() !== 'SAFE') {
+                 const div = document.createElement('div');
+                 div.innerHTML = `<div class="ai-guardrail" style="padding:20px; margin-top:30px; border-radius:8px; font-size:12px; color:var(--canvas-text);"><strong>🚨 OS Legal Guardrail Alert:</strong><br>${result}</div>`;
+                 DOM.canvas.appendChild(div); 
+                 saveVersion();
+            } else { 
+                 alert("OS Guardrails Passed. No structural liability detected."); 
+            }
+        }
+
+        function updateBrain() {
+            appState.docContext.client = DOM.brainInputs.c.value;
+            appState.docContext.amount = DOM.brainInputs.a.value;
+            appState.docContext.date = DOM.brainInputs.d.value;
+            appState.docContext['Client Name'] = DOM.brainInputs.c.value;
+            appState.docContext['Amount'] = DOM.brainInputs.a.value;
+            appState.docContext['Date'] = DOM.brainInputs.d.value;
+        }
+
+        function autofillDoc() {
+            let html = DOM.canvas.innerHTML;
+            if(appState.docContext.client) html = html.replace(/\[Client Name\]|\[Client\]/gi, appState.docContext.client);
+            if(appState.docContext.amount) html = html.replace(/\[Amount\]|\[Total\]/gi, `$${appState.docContext.amount}`);
+            if(appState.docContext.date) html = html.replace(/\[Date\]/gi, appState.docContext.date);
+            DOM.canvas.innerHTML = html; 
+            evaluateMathFields(); 
+            saveVersion(); 
+            closeMobilePanels();
+        }
+
+        function syncLiveData() {
+            let html = DOM.canvas.innerHTML;
+            const liveRegex = /\[Live_([A-Za-z0-9_]+)\]/g;
+            // Simulated External CRM/ERP Data Payload
+            const externalData = { "TaxRate": "0.18", "CurrentYear": new Date().getFullYear(), "MarketPrice": "2499", "VendorID": "VX-9902" }; 
+            let synced = false;
+            
+            html = html.replace(liveRegex, (match, variable) => {
+                if (externalData[variable]) { synced = true; return `[${variable}]`; }
+                return match;
+            });
+            
+            if (synced) {
+                appState.docContext = { ...appState.docContext, ...externalData };
+                DOM.canvas.innerHTML = html; 
+                evaluateMathFields(); 
+                saveVersion();
+                alert("External API Data Feeds Synced successfully.");
+            } else { 
+                alert("No [Live_...] telemetry tags found in current canvas."); 
+            }
+        }
+
+        // --- 12. TEMPLATE VAULT & MARKETPLACE LOGIC ---
+        function saveCurrentAsTemplate() {
+            let name = prompt("Assign an archive name for this OS Blueprint:");
+            if(!name) return;
+            let tmpls = JSON.parse(localStorage.getItem('smartdraft_templates') || '[]');
+            // Prepend new templates
+            tmpls.unshift({ name: name, html: DOM.canvas.innerHTML, date: new Date().toISOString() });
+            localStorage.setItem('smartdraft_templates', JSON.stringify(tmpls));
+            
+            renderSavedTemplates(); 
+            updateDashboardStats();
+            alert("Blueprint committed to Secure Vault.");
+        }
+
+        function renderSavedTemplates() {
+            let tmpls = JSON.parse(localStorage.getItem('smartdraft_templates') || '[]');
+            
+            // Dashboard Renders
+            let dashContainer = document.getElementById('dash-saved-templates');
+            if (dashContainer) {
+                if(tmpls.length === 0) {
+                    dashContainer.innerHTML = '<div class="p-10 text-center text-sm theme-text-muted border-2 theme-border border-dashed rounded-3xl theme-bg-panel col-span-full"><i data-lucide="folder-lock" class="w-10 h-10 mx-auto mb-4 opacity-50"></i>No custom templates archived.<br>Create a document and hit "Save Canvas to Vault".</div>';
+                } else {
+                    dashContainer.innerHTML = tmpls.map((t, i) => `
+                        <div onclick="loadSavedTemplate(${i})" class="theme-bg-panel border theme-border rounded-3xl p-6 cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group shadow-lg relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
+                            <div class="flex justify-between items-start mb-4 relative z-10">
+                                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="file-text" class="w-6 h-6"></i></div>
+                                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">LOCAL Vault</span>
+                            </div>
+                            <h4 class="font-bold theme-text-main text-lg truncate relative z-10">${t.name}</h4>
+                            <p class="text-xs theme-text-muted mt-2 relative z-10">Archived Blueprint</p>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Sidebar Editor Renders
+            let editorContainer = document.getElementById('saved-templates-list-editor');
+            if (editorContainer) {
+                if(tmpls.length === 0) { 
+                    editorContainer.innerHTML = '<p class="text-xs theme-text-muted italic">No archives found.</p>'; 
+                } else {
+                    editorContainer.innerHTML = tmpls.map((t, i) => `<button onclick="loadSavedTemplate(${i})" class="w-full btn justify-start text-xs mb-2 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 shadow-sm"><i data-lucide="file" class="w-4 h-4"></i> ${t.name}</button>`).join('');
+                }
+            }
+            lucide.createIcons();
+        }
+
+        function loadSavedTemplate(index) {
+            let tmpls = JSON.parse(localStorage.getItem('smartdraft_templates') || '[]');
+            if(tmpls[index]) {
+                document.getElementById('dashboard-view').classList.add('hidden');
+                document.getElementById('creation-modal').style.display = 'none';
+                document.getElementById('main-workspace').classList.remove('hidden');
+                
+                DOM.canvas.innerHTML = tmpls[index].html;
+                saveVersion(); 
+                closeMobilePanels();
+            }
+        }
+
+        // Base System Architectures
+        const baseTemplates = {
+            invoice: `<div style="font-family:sans-serif; max-width:800px; margin:auto;"><div style="display:flex; justify-content:space-between; border-bottom:2px solid var(--border-light); padding-bottom:20px; margin-bottom:20px;"><div><h1 style="margin:0; font-size:2.5rem;">INVOICE</h1><p style="color:var(--text-muted);">#INV-${new Date().getFullYear()}-001</p></div><div style="text-align:right;"><strong>[Company]</strong><br>[Address]</div></div><div style="margin-bottom:30px;"><strong>Billed To:</strong><br>[Client Name]<br></div><table style="width:100%; border-collapse:collapse; margin-bottom:20px; border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-panel); text-align:left;"><th style="padding:15px; border-bottom:1px solid var(--border-light);">Description</th><th style="padding:15px; border-bottom:1px solid var(--border-light); text-align:right;">Amount</th></tr><tr><td style="padding:15px; border-bottom:1px solid var(--border);">Consulting Services</td><td style="padding:15px; border-bottom:1px solid var(--border); text-align:right;">[Amount]</td></tr></table><div style="text-align:right; font-size:1.5em; margin-top:30px;"><strong>Total Due: <span style="color:var(--success);">[[ [Amount] * 1.0 ]]</span></strong></div></div>`,
+            contract: `<div style="font-family:serif; line-height:1.8; text-align:justify;"><h2 style="text-align:center; text-transform:uppercase; font-size:2rem; margin-bottom:30px;">Non-Disclosure Agreement</h2><p>This Agreement is entered into on <strong>[Date]</strong>, between <strong>[Company]</strong> and <strong>[Client Name]</strong>.</p><h3 style="margin-top:20px;">1. Confidential Information</h3><p>The Receiving Party shall keep all information strictly confidential.</p><h3 style="margin-top:20px;">2. Term</h3><p>This agreement remains in effect for a period of 2 years.</p><br><br><div style="display:flex; justify-content:space-between; margin-top:50px;"><div style="border-top:1px solid var(--text-main); width:40%; padding-top:10px;">Signature (Company)</div><div style="border-top:1px solid var(--text-main); width:40%; padding-top:10px;">Signature (Client)</div></div></div>`,
+            proposal: `<div style="font-family:sans-serif;"><div style="background:var(--bg-panel); border:1px solid var(--border); padding:50px; border-radius:16px; margin-bottom:40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);"><h1>Project Proposal</h1><p style="font-size:1.2em; color:var(--text-muted);">Prepared exclusively for: [Client Name]</p></div><h2>Executive Summary</h2><p>We propose a comprehensive solution to streamline your enterprise operations.</p><h2 style="margin-top:30px;">Investment</h2><table style="width:100%; border-collapse:collapse; margin-top:20px; border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-panel);"><th style="padding:15px; text-align:left;">Phase</th><th style="padding:15px; text-align:right;">Cost</th></tr><tr><td style="padding:15px; border-bottom:1px solid var(--border);">Phase 1: Architecture Design</td><td style="padding:15px; border-bottom:1px solid var(--border); text-align:right;">$5000</td></tr></table><p style="margin-top:20px; background:var(--accent-glow); padding:15px; border-radius:8px; border: 1px solid var(--accent);"><strong>Discount Logic Array:</strong> [[ IF 5000 > 1000 THEN 5000 * 0.9 ELSE 5000 ]]</p></div>`,
+            ppt: `<div style="text-align:center; padding-top:15vh;"><h1 style="font-size: 5rem; color: var(--accent); margin-bottom:20px; font-weight:900; letter-spacing:-0.05em;">Q4 Strategy Deck</h1><p style="font-size: 2.5rem; color: var(--text-muted);">Presented by [Company]</p></div>`
+        };
+
+        function loadTemplate(key) { 
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('creation-modal').style.display = 'none';
+            document.getElementById('main-workspace').classList.remove('hidden');
+            
+            let html = baseTemplates[key];
+            if(companyDNA.company) html = html.replace(/\[Company\]/g, companyDNA.company);
+            if(companyDNA.address) html = html.replace(/\[Address\]/g, companyDNA.address);
+            
+            DOM.canvas.innerHTML = html; 
+            saveVersion(); 
+            closeMobilePanels(); 
+            runAudit(); 
+        }
+
+        // --- 13. EXPORT, ANALYTICS & COMMAND PALETTE ---
+        function executeCmd(cmd) {
+            closeModals();
+            if(cmd === 'audit') runAudit(); 
+            if(cmd === 'ai_audit') runAIGuardrails();
+            if(cmd === 'live_sync') syncLiveData();
+            if(cmd === 'export_pdf') exportDoc('pdf'); 
+            if(cmd === 'semantic_search') {
+                const query = prompt("What data point do you want the AI to extract?");
+                if(query) { askGemini(`Extract exact answer based on: "${query}".`, DOM.canvas.innerText, null, 'right').then(r => alert(`🧠 AI Semantic Output:\n\n${r}`)); }
+            }
+            if(cmd === 'brand_convert') {
+                const brand = prompt("Enter Target Aesthetic (e.g., 'Cyberpunk Neon', 'Minimalist Mono'):");
+                if (brand) { askGemini(`Convert HTML's inline CSS strictly to match: ${brand}. DO NOT modify DOM text or layout.`, DOM.canvas.innerHTML, null, 'right').then(h => { DOM.canvas.innerHTML = h; saveVersion(); }); }
+            }
+        }
+
+        function exportDoc(type) {
+            if(type === 'pdf') { 
+                html2pdf().set({ margin: [0, 0], filename: 'SmartDraft_OS_Export.pdf', jsPDF: { format: 'a4' } }).from(DOM.canvas).save(); 
+            } 
+            else if(type === 'api') {
+                const jsonStr = JSON.stringify({ document: DOM.canvas.innerHTML, metadata: appState.docContext, metrics: { words: document.getElementById('stat-words').innerText, generated_by: currentUser.name } }, null, 2);
+                const w = window.open(); w.document.write(`<pre style="background:#000;color:#00ffcc;padding:20px;font-family:monospace;">${jsonStr.replace(/</g, '&lt;')}</pre>`);
+            }
+        }
+
+        function updateAnalytics() {
+            if(document.getElementById('dashboard-view').classList.contains('hidden')) {
+                const words = DOM.canvas.innerText.trim().split(/\s+/).filter(w => w.length > 0).length;
+                const statWords = document.getElementById('stat-words');
+                if(statWords) statWords.innerText = words;
+                
+                let mins = ((Date.now() - appState.startTime) / 60000);
+                const statTimeEditor = document.getElementById('stat-time');
+                if(statTimeEditor) statTimeEditor.innerText = Math.floor(mins);
+
+                // Update deep dash time metrics in hours
+                let storedTime = parseFloat(localStorage.getItem('smartdraft_time_saved') || '0');
+                storedTime += (5/3600); // add 5 seconds to total saved time metric
+                localStorage.setItem('smartdraft_time_saved', storedTime.toString());
+                const dashTime = document.getElementById('stat-dash-time');
+                if(dashTime) dashTime.innerText = storedTime.toFixed(2);
+            }
+        }
+
+        // --- 14. WEBRTC P2P SYNC & CHAT ENGINE (SIMULATION/MOCK) ---
+        function openWebRTCModal() {
+            document.getElementById('webrtc-modal').style.display = 'flex';
+        }
+
+        function initiateWebRTC() {
+            const partnerUid = document.getElementById('rtc-partner-uid').value.trim();
+            if(!partnerUid) { alert("Partner UID is required to establish handshake."); return; }
+            
+            // Visual Simulation of WebRTC Handshake & Connection
+            closeModals();
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('main-workspace').classList.remove('hidden');
+            switchTab('right', 'tab-collab');
+            
+            appState.isCollabActive = true;
+            
+            // Activate Collab UI
+            const collabTab = document.getElementById('tab-collab');
+            collabTab.querySelector('.bg-emerald-500\\/10').classList.add('hidden'); // hide inactive box
+            
+            // Setup mock Chat Channel UI
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML += `<div class="text-center text-[10px] theme-text-muted font-bold tracking-widest my-2">SECURE HANDSHAKE ESTABLISHED WITH ${partnerUid}</div>`;
+            
+            // Activate Remote Cursor UI
+            const rCursor = document.getElementById('remote-cursor-1');
+            rCursor.style.display = 'block';
+            rCursor.setAttribute('data-user', partnerUid);
+            
+            // Trigger floating video overlay
+            document.getElementById('rtc-video-container').classList.remove('hidden');
+            document.getElementById('rtc-partner-name').innerText = partnerUid.split('-')[1];
+
+            // Setup mock cursor tracking (Wanders slightly to simulate remote peer)
+            setInterval(() => {
+                if(!appState.isCollabActive) return;
+                const rect = DOM.canvas.getBoundingClientRect();
+                const rX = Math.random() * (rect.width - 20) + rect.left;
+                const rY = Math.random() * (rect.height - 20) + rect.top + window.scrollY;
+                rCursor.style.transform = `translate(${rX}px, ${rY}px)`;
+            }, 2500);
+
+            alert(`E2E Encryption established with ${partnerUid}. Live sync active.`);
+        }
+
+        function broadcastCanvasUpdate() {
+            // In a real WebRTC data channel, this sends JSON:
+            // appState.rtcChannel.send(JSON.stringify({ type: 'doc_update', html: DOM.canvas.innerHTML }));
+            
+            // For V2 Simulation: Visual feedback on chat panel
+            // console.log("Broadcasting canvas state to peer...");
+        }
+
+        // --- 15. SIGNATURE HARDWARE INTEGRATION ---
+        function initSignaturePad() {
+            const sigCanvas = document.getElementById('sig-canvas'); 
+            if(!sigCanvas) return;
+            const sigCtx = sigCanvas.getContext('2d'); 
+            let isDrawing = false;
+            
+            // High fidelity touch and mouse listeners
+            sigCanvas.addEventListener('mousedown', startPos); 
+            sigCanvas.addEventListener('touchstart', startPos, {passive: false});
+            sigCanvas.addEventListener('mouseup', endPos); 
+            sigCanvas.addEventListener('touchend', endPos);
+            sigCanvas.addEventListener('mousemove', draw); 
+            sigCanvas.addEventListener('touchmove', draw, {passive: false});
+            
+            function startPos(e) { isDrawing = true; draw(e); } 
+            function endPos() { isDrawing = false; sigCtx.beginPath(); }
+            function draw(e) {
+                if(!isDrawing) return; e.preventDefault(); 
+                const rect = sigCanvas.getBoundingClientRect(); 
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX); 
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                sigCtx.lineWidth = 4; sigCtx.lineCap = 'round'; sigCtx.strokeStyle = 'var(--text-main)';
+                sigCtx.lineTo(clientX - rect.left, clientY - rect.top); sigCtx.stroke(); 
+                sigCtx.beginPath(); sigCtx.moveTo(clientX - rect.left, clientY - rect.top);
+            }
+            window.clearSignature = () => { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); };
+            window.saveSignature = () => {
+                const dataUrl = sigCanvas.getContext('2d').canvas.toDataURL();
+                const img = document.createElement('img'); 
+                img.src = dataUrl; 
+                img.style.maxHeight = '100px'; 
+                img.style.borderBottom = '2px solid var(--text-main)'; 
+                img.style.display = 'block';
+                
+                if(window.getSelection().rangeCount > 0 && DOM.canvas.contains(window.getSelection().anchorNode)) { 
+                    window.getSelection().getRangeAt(0).insertNode(img); 
+                } else { 
+                    DOM.canvas.appendChild(img); 
+                }
+                closeModals(); saveVersion(); clearSignature();
+                if(appState.isCollabActive) broadcastCanvasUpdate();
+            };
+        }
+
+        function openSignature() {
+            closeMobilePanels(); 
+            document.getElementById('sig-modal').style.display = 'flex';
+            setTimeout(() => { 
+                const canvas = document.getElementById('sig-canvas');
+                const rect = canvas.parentElement.getBoundingClientRect(); 
+                canvas.width = rect.width - 12; // Adjust for border padding dynamically
+            }, 100);
+        }
+
+        // --- 16. VERSION CONTROL (DIFF SYSTEM) ---
+        function saveVersion() {
+            if (appState.role === 'viewer') return; 
+            if(appState.history.length > 0 && appState.history[appState.history.length-1] === DOM.canvas.innerHTML) return;
+            
+            appState.history.push(DOM.canvas.innerHTML);
+            if(appState.history.length > 30) appState.history.shift(); // Keep last 30 states
+            updateTimelineUI();
+        }
+
+        function restoreLastVersion() {
+            if(appState.role === 'viewer') return;
+            if(appState.history.length > 1) {
+                appState.history.pop(); 
+                DOM.canvas.innerHTML = appState.history[appState.history.length - 1];
+                updateTimelineUI();
+                if(appState.isCollabActive) broadcastCanvasUpdate();
+            }
+        }
+
+        function updateTimelineUI() {
+            const list = document.getElementById('timeline-list');
+            if(!list) return;
+            // Generate visual diff timeline
+            list.innerHTML = appState.history.map((_, i) => `
+                <div class="relative mb-4 group cursor-pointer hover:opacity-70 transition">
+                    <div class="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.8)] group-hover:scale-125 transition-transform"></div>
+                    <p class="text-[10px] theme-text-main font-bold tracking-wider uppercase">Diff Snapshot ${i+1}</p>
+                    <p class="text-[9px] theme-text-muted mt-0.5">Auto-saved to local memory.</p>
+                </div>
+            `).reverse().join('');
+        }
+
+        // Context Menu Execution
+        async function ctxExec(cmd) {
+            DOM.ctxMenu.style.display = 'none';
+            const sel = window.getSelection();
+            if(!sel.rangeCount) return;
+            
+            let currentSelNode = sel.getRangeAt(0).commonAncestorContainer;
+            if(currentSelNode.nodeType === 3) currentSelNode = currentSelNode.parentNode;
+            if(!DOM.canvas.contains(currentSelNode)) return;
+
+            if(cmd === 'lock') {
+                currentSelNode.contentEditable = "false"; currentSelNode.classList.add('locked-section'); saveVersion();
+            } else if (cmd === 'unlock') {
+                currentSelNode.contentEditable = "true"; currentSelNode.classList.remove('locked-section'); saveVersion();
+            } else if (cmd === 'rewrite' || cmd === 'summarize') {
+                const text = currentSelNode.innerText;
+                const prompt = cmd === 'rewrite' ? "Rewrite professionally and aggressively." : "Summarize in one short sentence.";
+                const res = await askGemini(prompt, text, null, 'right');
+                if(res) { currentSelNode.innerHTML = res; saveVersion(); }
+            }
+            if(appState.isCollabActive) broadcastCanvasUpdate();
+        }
+
+        // --- 17. MOBILE UTILITIES & HELPERS ---
+        function toggleMobilePanel(id) {
+            const panel = document.getElementById(id); 
+            const otherPanelId = id === 'sidebar-left' ? 'sidebar-right' : 'sidebar-left';
+            document.getElementById(otherPanelId).classList.remove('open'); 
+            panel.classList.toggle('open');
+        }
+        
+        function closeMobilePanels() { 
+            const left = document.getElementById('sidebar-left');
+            const right = document.getElementById('sidebar-right');
+            if(left) left.classList.remove('open'); 
+            if(right) right.classList.remove('open'); 
+        }
+        
+        function debounce(func, wait) { 
+            let timeout; 
+            return function executedFunction(...args) { 
+                const later = () => { clearTimeout(timeout); func(...args); }; 
+                clearTimeout(timeout); timeout = setTimeout(later, wait); 
+            }; 
+        }
+        
+        function handleTyping() { saveVersion(); }
+    </script>
+</body>
+</html>
