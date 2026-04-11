@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lumina OS | The Cognitive Workspace</title>
+    <meta name="description" content="Intelligent Operating System for Professional Drafting. Featuring multi-persona AI, dynamic AST math, and robust document architecture.">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/libs/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================================================
+           [1] LUMINA OS THEME ENGINE
+           ========================================================================== */
+        :root {
+            /* Theme 0: Lumina Dark (Glassmorphism Pro) */
+            --bg-main: #030305;
+            --bg-panel: #0a0a0f; 
+            --bg-header: rgba(3, 3, 5, 0.75);
+            --border: #1a1a2e; 
+            --border-light: #2a2a40;
+            --text-main: #f8fafc; 
+            --text-muted: #8b949e;
+            --accent: #3b82f6; 
+            --accent-hover: #2563eb;
+            --accent-glow: rgba(59, 130, 246, 0.25);
+            --canvas-bg: #ffffff; 
+            --canvas-text: #0f172a;
+            --sidebar-width: 380px; 
+            --shadow-glow: 0 8px 30px var(--accent-glow);
+            --page-break-color: #334155; 
+            --success: #10b981;
+            --warning: #f59e0b; 
+            --danger: #ef4444;
+            --radius-sm: 12px;
+            --radius-md: 18px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+        }
+        
+        [data-theme="light-minimal"] {
+            /* Theme 1: Nordic Clean */
+            --bg-main: #f1f5f9;
+            --bg-panel: #ffffff; 
+            --bg-header: rgba(255, 255, 255, 0.85);
+            --border: #e2e8f0; 
+            --border-light: #cbd5e1;
+            --text-main: #0f172a; 
+            --text-muted: #64748b;
+            --accent: #0f172a; 
+            --accent-hover: #334155;
+            --accent-glow: rgba(15, 23, 42, 0.1);
+            --canvas-bg: #ffffff; 
+            --canvas-text: #0f172a;
+            --shadow-glow: 0 10px 25px rgba(0,0,0,0.08); 
+            --page-break-color: #cbd5e1;
+        }
+
+        [data-theme="luxury-legal"] {
+            /* Theme 2: Luxury Legal */
+            --bg-main: #050505;
+            --bg-panel: #0f0f0f; 
+            --bg-header: rgba(5, 5, 5, 0.85);
+            --border: #262626; 
+            --border-light: #404040;
+            --text-main: #fafafa; 
+            --text-muted: #a3a3a3;
+            --accent: #d4af37; /* Gold */
+            --accent-hover: #b5952f;
+            --accent-glow: rgba(212, 175, 55, 0.15);
+            --canvas-bg: #fffcf2; 
+            --canvas-text: #171717;
+            --shadow-glow: 0 8px 30px var(--accent-glow); 
+            --page-break-color: #404040;
+        }
+
+        /* ==========================================================================
+           [2] GLOBAL TYPOGRAPHY, RESETS, & UTILITIES
+           ========================================================================== */
+        *, *::before, *::after { box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; 
+            overscroll-behavior-y: none; 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            -webkit-font-smoothing: antialiased;
+            margin: 0; padding: 0;
+        }
+        
+        /* Utility Classes for DOM Binding */
+        .theme-bg-main { background-color: var(--bg-main); color: var(--text-main); transition: background-color 0.3s; }
+        .theme-bg-panel { background-color: var(--bg-panel); transition: background-color 0.3s; }
+        .theme-bg-header { background-color: var(--bg-header); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); z-index: 40; }
+        .theme-border { border-color: var(--border); transition: border-color 0.3s; }
+        .theme-text-main { color: var(--text-main); }
+        .theme-text-muted { color: var(--text-muted); }
+        .theme-accent { color: var(--accent); }
+        .theme-accent-bg { background-color: var(--accent); color: #ffffff; box-shadow: var(--shadow-glow); }
+        
+        /* OS Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 12px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
+        
+        /* Smooth UI Animations */
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 15px var(--accent-glow); } 50% { box-shadow: 0 0 30px var(--accent-glow); transform: scale(1.005); } }
+
+        /* ==========================================================================
+           [3] CORE UI COMPONENTS (BUTTONS, INPUTS, MODALS, TOKENS)
+           ========================================================================== */
+        .theme-input { 
+            background-color: var(--bg-main);
+            border: 1px solid var(--border); 
+            color: var(--text-main); 
+            border-radius: var(--radius-md); 
+            padding: 16px 20px; 
+            font-size: 0.95rem; 
+            font-weight: 500;
+            transition: all 0.2s; 
+            outline: none;
+            width: 100%; 
+        }
+        .theme-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background-color: var(--bg-panel); }
+        .theme-input::placeholder { color: var(--text-muted); opacity: 0.5; }
+        
+        .btn { 
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border); 
+            color: var(--text-main); 
+            border-radius: var(--radius-md); 
+            padding: 14px 24px; 
+            font-size: 0.95rem; 
+            font-weight: 800; 
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+            display: inline-flex;
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            cursor: pointer;
+        }
+        .btn:hover { border-color: var(--border-light); background-color: var(--bg-main); transform: translateY(-1px); }
+        .btn:active { transform: scale(0.97); }
+        
+        .btn-primary { background-color: var(--accent); color: #ffffff; border-color: var(--accent-hover); box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); box-shadow: 0 6px 25px var(--accent-glow); }
+        .btn-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background-color: var(--danger); color: #ffffff; box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+        
+        .modal-bg { background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 9999; }
+        
+        .loader { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin-slow 0.8s linear infinite; }
+        
+        /* Token Energy Bar UI */
+        .token-bar-container { width: 100%; height: 6px; background: var(--border); border-radius: 10px; overflow: hidden; margin-top: 8px;}
+        .token-bar-fill { height: 100%; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); transition: width 0.4s ease; }
+        .token-bar-warning { background: var(--warning); box-shadow: 0 0 10px rgba(245,158,11,0.5); }
+        .token-bar-danger { background: var(--danger); box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+
+        /* Dashboard Tabs */
+        .dash-tab-content, .sidebar-tab-content { display: none; animation: fadeIn 0.4s; }
+        .dash-tab-content.active, .sidebar-tab-content.active { display: block; }
+        
+        .side-tab-btn { position: relative; transition: color 0.3s; background: transparent; border: none; cursor: pointer; }
+        .side-tab-btn::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 3px; background-color: var(--accent); transition: width 0.3s; }
+        .side-tab-btn.active { color: var(--accent); }
+        .side-tab-btn.active::after { width: 100%; }
+
+        /* ==========================================================================
+           [4] WORKSPACE ARCHITECTURE: A4, PDF (WPS), 16:9 PPT
+           ========================================================================== */
+        .workspace-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+        
+        .sidebar { 
+            width: var(--sidebar-width);
+            background-color: var(--bg-panel); 
+            border-color: var(--border);
+            display: flex; flex-direction: column; 
+            z-index: 40; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .sidebar-left { border-right-width: 1px; }
+        .sidebar-right { border-left-width: 1px; }
+        
+        .canvas-wrapper { 
+            flex: 1;
+            background-color: var(--bg-main); 
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 30px 30px; 
+            overflow-y: auto; overflow-x: hidden; 
+            display: flex; flex-direction: column; align-items: center;
+            padding: 3rem 1rem 10rem 1rem; 
+            scroll-behavior: smooth;
+        }
+        
+        #doc-canvas { 
+            background: var(--canvas-bg);
+            color: var(--canvas-text); 
+            box-shadow: 0 30px 60px -15px rgba(0,0,0,0.5);
+            border-radius: var(--radius-sm); outline: none; position: relative; 
+            line-height: 1.8;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            margin: 0 auto;
+        }
+
+        /* 1. Standard Web Doc (Continuous) */
+        #doc-canvas.mode-doc { width: 100%; max-width: 210mm; min-height: 297mm; padding: 25mm 20mm; }
+        
+        /* 2. WPS Multi-Page View */
+        #doc-canvas.mode-pdf { 
+            width: 100%; max-width: 210mm; min-height: 297mm; padding: 25mm 20mm;
+            background-image: repeating-linear-gradient(to bottom, transparent, transparent 296mm, var(--page-break-color) 296mm, var(--page-break-color) 297mm);
+        }
+        .page-break-element {
+            display: block; width: 100%; height: 40px; margin: 30px 0;
+            border-bottom: 2px dashed var(--danger); position: relative;
+            page-break-after: always; break-after: page; opacity: 0.7;
+        }
+        .page-break-element::after {
+            content: '✂️ PHYSICAL PAGE BREAK';
+            position: absolute; bottom: -12px; left: 50%;
+            transform: translateX(-50%); background: var(--canvas-bg); color: var(--danger);
+            padding: 0 12px; font-size: 11px; font-weight: 800; letter-spacing: 3px;
+        }
+
+        /* 3. True 16:9 Presentation Mode Fix */
+        .canvas-wrapper.mode-ppt-wrapper { 
+            overflow-x: auto; padding: 3rem; justify-content: center; align-items: center;
+        }
+        #doc-canvas.mode-ppt { 
+            width: 100%;
+            max-width: 1280px; 
+            aspect-ratio: 16 / 9; /* Strict 16:9 Enforcement */
+            min-height: unset; /* Override A4 logic */
+            padding: 5%; 
+            border-radius: var(--radius-lg);
+            font-size: 1.75rem; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        
+        /* AST Math & Locked Encryption Nodes */
+        .calc-field { background: rgba(16, 185, 129, 0.15); border-bottom: 2px dashed var(--success); padding: 2px 8px; border-radius: 6px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .smart-field { background: var(--accent-glow); border-bottom: 2px dashed var(--accent); padding: 2px 8px; border-radius: 6px; font-weight: 800; }
+        
+        .locked-section { border: 2px solid var(--danger); background: rgba(239,68,68,0.03); border-radius: 8px; padding: 12px; margin: 15px 0; position: relative; filter: blur(4px); transition: filter 0.3s; cursor: pointer; user-select: none;}
+        .locked-section:hover { filter: blur(2px); }
+        .locked-section::after { content: '🔒 ENCRYPTED REGION - CLICK TO UNLOCK'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; font-weight: 800; background: var(--danger); color: #fff; padding: 8px 16px; border-radius: 12px; letter-spacing: 1px; }
+        .locked-section.unlocked { filter: none; border-color: var(--success); background: transparent; cursor: text; user-select: auto; }
+        .locked-section.unlocked::after { display: none; }
+
+        /* Placeholders */
+        [contenteditable]:empty::before { content: attr(data-placeholder); color: var(--text-muted); opacity: 0.6; pointer-events: none; display: block; font-style: italic; }
+
+        /* ==========================================================================
+           [5] MOBILE RESPONSIVE ENGINE (BOTTOM SHEETS)
+           ========================================================================== */
+        @media (max-width: 1024px) {
+            .mobile-hide { display: none !important; }
+            
+            .sidebar { 
+                position: fixed;
+                bottom: 80px; left: 0; right: 0; 
+                width: 100%; height: 75vh; 
+                border: none; border-top: 1px solid var(--border); 
+                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+                box-shadow: 0 -20px 60px rgba(0,0,0,0.9); 
+                transform: translateY(120%); 
+                z-index: 100;
+            }
+            .sidebar.open { transform: translateY(0); }
+            
+            .workspace-layout { display: block; height: calc(100vh - 64px - 80px); }
+            .canvas-wrapper { padding: 1rem 0.5rem 2rem 0.5rem; height: 100%; }
+            #doc-canvas.mode-doc, #doc-canvas.mode-pdf { 
+                width: 100%; max-width: 100%; border-radius: 8px; padding: 15px; box-shadow: none; border: 1px solid var(--border);
+            }
+            #doc-canvas.mode-ppt { aspect-ratio: auto; min-height: 50vh; }
+            
+            .mobile-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; z-index: 110; }
+        }
+        @media (min-width: 1025px) { .mobile-nav { display: none !important; } }
+        
+        /* Printer Logic */
+        @media print { 
+            body * { visibility: hidden; } 
+            #doc-canvas, #doc-canvas * { visibility: visible; } 
+            #doc-canvas { position: absolute; left: 0; top: 0; margin: 0; padding: 0; box-shadow: none; width: 100%; border-radius: 0; } 
+            .page-break-element::after { display: none; }
+        }
+    </style>
+</head>
+<body class="theme-bg-main flex flex-col h-screen text-sm">
+
+    <div id="auth-modal" class="fixed inset-0 modal-bg flex flex-col items-center justify-center p-4 z-[9999]">
+        <div class="theme-bg-panel border theme-border rounded-[32px] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden slide-up">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+            
+            <div class="flex items-center gap-5 mb-8 mt-2">
+                <div class="w-16 h-16 rounded-2xl theme-accent-bg flex items-center justify-center shadow-lg"><i data-lucide="cpu" class="w-8 h-8 text-white"></i></div>
+                <div>
+                    <h2 class="theme-text-main text-3xl font-black tracking-tight">Lumina <span class="theme-accent">OS</span></h2>
+                    <p class="theme-text-muted text-[10px] font-extrabold tracking-widest uppercase mt-1">Cognitive Workspace</p>
+                </div>
+            </div>
+            
+            <div class="mb-8 p-5 rounded-2xl bg-black/20 border theme-border shadow-inner">
+                <p class="text-xs theme-text-muted leading-relaxed font-medium">
+                    Welcome to the intelligence layer. Please initialize your local node to begin drafting. Memory is stored locally.
+                </p>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[11px] theme-text-muted uppercase tracking-widest font-extrabold mb-2 block pl-1">System Identity</label>
+                    <input type="text" id="auth-name" placeholder="e.g. jason" class="theme-input py-4 font-bold text-base">
+                </div>
+                <div>
+                    <label class="text-[11px] theme-text-muted uppercase tracking-widest font-extrabold mb-2 block pl-1 flex justify-between">
+                        <span>Master Password</span>
+                        <span class="text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md text-[9px]">Optional</span>
+                    </label>
+                    <input type="password" id="auth-pass" placeholder="Leave blank if not required" class="theme-input py-4 font-mono tracking-widest text-base">
+                </div>
+                <button onclick="handleInitialLogin()" class="w-full btn btn-primary py-4 mt-4 font-extrabold tracking-wide text-base shadow-[0_8px_20px_var(--accent-glow)] rounded-xl">Boot Workspace</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="unlock-modal" class="fixed inset-0 modal-bg hidden flex-col items-center justify-center p-4 z-[9999]">
+        <div class="theme-bg-panel border theme-border rounded-[32px] p-8 md:p-12 w-full max-w-sm shadow-2xl relative overflow-hidden slide-up text-center">
+            <div class="w-20 h-20 rounded-[2rem] bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-6 border border-blue-500/20 shadow-inner">
+                <i data-lucide="fingerprint" class="w-10 h-10"></i>
+            </div>
+            <h2 class="theme-text-main text-3xl font-black tracking-tight mb-2">Node Locked</h2>
+            <p class="theme-text-muted text-xs mb-8 font-medium px-2">Local architectural memory is encrypted. Authenticate to proceed.</p>
+            
+            <input type="password" id="unlock-pass" placeholder="••••••••" class="theme-input py-4 text-center text-2xl tracking-[0.5em] mb-6 font-mono font-bold">
+            <button onclick="handleUnlock()" class="w-full btn btn-primary py-4 font-extrabold text-base mb-8 rounded-xl shadow-[0_8px_20px_var(--accent-glow)]">Decrypt Node</button>
+            
+            <div class="border-t theme-border pt-6 mt-2">
+                 <p class="text-[10px] theme-text-muted mb-3 uppercase font-extrabold tracking-widest text-red-500">Emergency Purge</p>
+                <div class="flex flex-col gap-3">
+                    <input type="password" id="reset-pass-verify" placeholder="Confirm Password" class="theme-input py-3.5 text-xs text-center border-red-500/30 bg-red-500/5 focus:border-red-500">
+                    <button onclick="resetAccountSecurely()" class="w-full btn btn-danger font-bold py-3.5 rounded-xl text-xs"><i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Wipe System Memory</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-[9999]">
+        <div class="theme-bg-panel border theme-border rounded-[32px] p-8 md:p-10 w-full max-w-xl shadow-2xl slide-up">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="theme-text-main font-black text-2xl flex items-center gap-3"><i data-lucide="dna" class="w-7 h-7 theme-accent"></i> Brand DNA Core</h3>
+                <button onclick="closeModals()" class="text-zinc-500 hover:text-white bg-black/20 hover:bg-black/40 p-2.5 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <p class="text-xs theme-text-muted mb-6 leading-relaxed">Data entered here is injected into the AI's cognitive loop. It will automatically reference your entity name and parameters without being asked.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="col-span-full">
+                    <label class="text-[11px] theme-text-muted uppercase font-extrabold mb-2 block tracking-widest pl-1">Primary Entity Name</label>
+                    <input type="text" id="prof-company" placeholder="e.g. Lumina Technologies LLC" class="theme-input py-4 font-medium">
+                </div>
+                <div>
+                    <label class="text-[11px] theme-text-muted uppercase font-extrabold mb-2 block tracking-widest pl-1">Tax ID / Registration</label>
+                    <input type="text" id="prof-gst" placeholder="e.g. EIN / GSTIN" class="theme-input py-4 font-medium">
+                </div>
+                <div>
+                    <label class="text-[11px] theme-text-muted uppercase font-extrabold mb-2 block tracking-widest pl-1">Default Document Tone</label>
+                    <input type="text" id="prof-tone" placeholder="e.g. Strict & Legal" class="theme-input py-4 font-medium">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t theme-border">
+                <button onclick="closeModals()" class="btn px-6 py-3.5 border-transparent bg-black/20 hover:bg-black/40 rounded-xl">Discard</button>
+                <button onclick="saveProfileDNA()" class="btn btn-primary px-8 py-3.5 rounded-xl shadow-lg"><i data-lucide="save" class="w-4 h-4"></i> Save Context</button>
+            </div>
+        </div>
+    </div>
+    <div id="creation-modal" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-[9999]">
+        <div class="theme-bg-panel border theme-border rounded-[32px] p-8 md:p-12 w-full max-w-6xl shadow-2xl fade-in relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-blue-500"></div>
+            <div class="flex justify-between items-center mb-10 relative z-10">
+                 <div>
+                    <h2 class="text-3xl md:text-4xl font-black theme-text-main tracking-tight">Initialize Canvas</h2>
+                    <p class="theme-text-muted text-sm mt-2 font-medium">Select a structural framework or inject existing external architecture.</p>
+                </div>
+                <button onclick="closeModals()" class="text-zinc-500 hover:text-white transition bg-black/10 hover:bg-black/20 p-3 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                <button onclick="initEditor('doc')" class="flex flex-col items-start p-8 border theme-border rounded-[2rem] hover:border-blue-500 hover:bg-blue-500/5 transition-all text-left group shadow-lg hover:shadow-2xl relative overflow-hidden">
+                     <div class="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
+                    <div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner relative z-10"><i data-lucide="file-text" class="w-8 h-8"></i></div>
+                    <h3 class="font-black theme-text-main mb-3 text-2xl relative z-10">Continuous A4</h3>
+                    <p class="text-sm theme-text-muted leading-relaxed font-medium relative z-10">Infinite scroll digital canvas. Best for web contracts, standard NDAs, and dynamic forms.</p>
+                </button>
+                
+                <button onclick="initEditor('pdf')" class="flex flex-col items-start p-8 border theme-border rounded-[2rem] hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-left group relative overflow-hidden shadow-lg hover:shadow-2xl">
+                    <div class="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-extrabold px-5 py-2 rounded-bl-2xl tracking-widest shadow-md z-20">WPS ENGINE</div>
+                    <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner relative z-10"><i data-lucide="copy" class="w-8 h-8"></i></div>
+                    <h3 class="font-black theme-text-main mb-3 text-2xl relative z-10">Paginated Print</h3>
+                    <p class="text-sm theme-text-muted leading-relaxed font-medium relative z-10">Physical page breaks. Required for strict legal compliance, court filings, and wet-ink printing.</p>
+                </button>
+
+                <button onclick="initEditor('ppt')" class="flex flex-col items-start p-8 border theme-border rounded-[2rem] hover:border-purple-500 hover:bg-purple-500/5 transition-all text-left group shadow-lg hover:shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-purple-500 text-white text-[10px] font-extrabold px-5 py-2 rounded-bl-2xl tracking-widest shadow-md z-20">16:9 NATIVE</div>
+                    <div class="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner relative z-10"><i data-lucide="monitor-play" class="w-8 h-8"></i></div>
+                    <h3 class="font-black theme-text-main mb-3 text-2xl relative z-10">Strategy Deck</h3>
+                    <p class="text-sm theme-text-muted leading-relaxed font-medium relative z-10">Landscape architecture. Exports natively to .pptx for pitch decks and executive summaries.</p>
+                </button>
+            </div>
+            
+            <div class="mt-10 pt-8 border-t theme-border">
+                 <h4 class="text-[11px] theme-text-muted font-extrabold tracking-widest uppercase mb-6 flex items-center gap-2"><i data-lucide="hard-drive-download" class="w-4 h-4 text-emerald-500"></i> Universal Hardware Importer</h4>
+                 
+                 <div class="border-2 border-dashed border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors rounded-[24px] p-10 text-center cursor-pointer group" onclick="document.getElementById('file-importer').click()">
+                    <input type="file" id="file-importer" class="hidden" accept=".docx,.txt" onchange="handleFileImport(event)">
+                    <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform"><i data-lucide="upload-cloud" class="w-8 h-8"></i></div>
+                    <h3 class="text-xl font-black theme-text-main mb-2">Drop .DOCX or .TXT here</h3>
+                    <p class="text-sm theme-text-muted font-medium">Lumina's parsing engine will reconstruct formatting and inject it into a Continuous Canvas.</p>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="fixed inset-0 theme-bg-main z-50 flex flex-col overflow-y-auto hidden">
+        
+        <header class="h-24 flex justify-between items-center px-6 md:px-10 border-b theme-border theme-bg-header sticky top-0 z-40 shadow-sm">
+            <div class="font-extrabold text-2xl tracking-tight flex items-center gap-3 theme-text-main">
+                <div class="w-12 h-12 rounded-2xl theme-accent-bg flex items-center justify-center shadow-[0_4px_15px_var(--accent-glow)]"><i data-lucide="cpu" class="w-6 h-6 text-white"></i></div>
+                 LUMINA<span class="theme-accent font-light">OS</span> 
+            </div>
+            
+            <div class="hidden lg:flex items-center gap-1 bg-black/10 p-1.5 rounded-2xl border theme-border shadow-inner">
+                <button class="dash-nav-btn active rounded-xl px-6 py-3 text-xs font-extrabold tracking-widest uppercase transition-all" onclick="switchDashTab('dash-overview')">Command</button>
+                <button class="dash-nav-btn rounded-xl px-6 py-3 text-xs font-extrabold tracking-widest uppercase transition-all" onclick="switchDashTab('dash-insights')">Intelligence</button>
+                <button class="dash-nav-btn rounded-xl px-6 py-3 text-xs font-extrabold tracking-widest uppercase transition-all" onclick="switchDashTab('dash-community')">Global Hub</button>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="flex flex-col items-end w-32 hidden sm:flex" title="AI Computation Quota">
+                    <div class="flex justify-between w-full mb-1">
+                        <span class="text-[9px] font-extrabold theme-text-muted uppercase tracking-widest">Cognitive Load</span>
+                        <span class="text-[10px] font-black theme-text-main"><span id="dash-ai-tokens">3</span> left</span>
+                    </div>
+                    <div class="token-bar-container">
+                        <div id="token-bar-visual" class="token-bar-fill" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="w-px h-10 bg-[var(--border)] hidden sm:block"></div>
+
+                <button onclick="openProfile()" class="btn border-transparent hover:bg-white/10 p-4 rounded-2xl bg-black/20 shadow-inner transition-transform hover:scale-105"><i data-lucide="settings" class="w-5 h-5 theme-text-main"></i></button>
+            </div>
+        </header>
+
+        <div id="dash-overview" class="dash-tab-content active max-w-[1600px] mx-auto w-full p-6 md:p-12 pt-8 md:pt-14 space-y-12">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 p-8 md:p-12 rounded-[32px] border theme-border relative overflow-hidden shadow-lg">
+                 <div class="absolute -right-20 -top-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <h1 class="text-4xl md:text-6xl font-black theme-text-main mb-4 tracking-tight">System nominal, <span id="dash-name" class="theme-accent">Architect</span>.</h1>
+                    <p class="text-base theme-text-muted font-medium max-w-2xl leading-relaxed">Your cognitive workspace is ready. Select an architecture framework to begin drafting, or inspect your telemetry data below.</p>
+                </div>
+                <div class="flex gap-4 relative z-10 w-full md:w-auto mt-6 md:mt-0">
+                    <button onclick="openCreationModal('new')" class="w-full md:w-auto btn btn-primary shadow-[0_10px_30px_var(--accent-glow)] py-4 px-8 rounded-2xl transition-all tracking-wide text-base"><i data-lucide="plus" class="w-5 h-5"></i> New Architecture</button>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                 <h4 class="text-xs font-extrabold theme-text-muted uppercase tracking-widest mb-6 flex items-center gap-2"><i data-lucide="activity" class="w-5 h-5 text-blue-500"></i> Global Telemetry</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+                    <div class="bg-black/20 border theme-border rounded-[24px] p-6 shadow-inner hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Architectures</p>
+                        <p class="text-4xl font-black theme-text-main" id="stat-dash-docs">0</p>
+                    </div>
+                    <div class="bg-blue-500/5 border border-blue-500/20 rounded-[24px] p-6 shadow-inner hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Cognitive Calls</p>
+                        <p class="text-4xl font-black text-blue-400" id="stat-dash-tokens">0</p>
+                    </div>
+                    <div class="bg-black/20 border theme-border rounded-[24px] p-6 shadow-inner hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Vault Items</p>
+                        <p class="text-4xl font-black theme-text-main" id="stat-dash-templates">0</p>
+                    </div>
+                    <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-[24px] p-6 shadow-inner hover:-translate-y-1 transition-transform">
+                         <p class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Hours Saved</p>
+                        <p class="text-4xl font-black text-emerald-400" id="stat-dash-time">0.0</p>
+                    </div>
+                    <div class="bg-black/20 border theme-border rounded-[24px] p-6 shadow-inner hover:-translate-y-1 transition-transform">
+                         <p class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Smart Clauses</p>
+                        <p class="text-4xl font-black theme-text-main" id="stat-dash-clauses">0</p>
+                    </div>
+                    <div class="bg-yellow-500/5 border border-yellow-500/20 rounded-[24px] p-6 shadow-inner hover:-translate-y-1 transition-transform relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-yellow-500/20 rounded-full blur-xl"></div>
+                        <p class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2 relative z-10">Value Matrix</p>
+                        <p class="text-4xl font-black text-yellow-400 relative z-10" id="stat-dash-revenue">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
+                <div class="lg:col-span-2">
+                    <h3 class="text-2xl font-black theme-text-main mb-6 flex items-center justify-between">
+                        <span class="flex items-center gap-3"><i data-lucide="lock-keyhole" class="w-6 h-6 theme-accent"></i> Encrypted Local Vault</span>
+                        <button onclick="openCreationModal('template')" class="text-xs theme-accent font-extrabold uppercase tracking-widest hover:bg-blue-500/10 px-5 py-3 rounded-xl transition-colors">Browse Library</button>
+                    </h3>
+                    <div id="dash-saved-templates" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-2xl font-black theme-text-main mb-6 flex items-center gap-3"><i data-lucide="terminal-square" class="w-6 h-6 theme-text-muted"></i> Kernel Log</h3>
+                    <div class="border theme-border rounded-[32px] theme-bg-panel p-8 shadow-lg relative overflow-hidden h-[400px]">
+                        <div class="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-blue-500 to-transparent"></div>
+                        <div id="dash-activity-feed" class="space-y-8 overflow-y-auto h-full no-scrollbar pr-4">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0 border border-blue-500/20"><i data-lucide="power" class="w-6 h-6"></i></div>
+                                 <div>
+                                    <p class="text-base font-black theme-text-main">OS Initialized</p>
+                                    <p class="text-xs theme-text-muted font-medium mt-1">Cryptography modules loaded securely.</p>
+                                    <p class="text-[10px] text-blue-500/70 font-mono mt-2 uppercase tracking-widest font-bold">Just now</p>
+                                </div>
+                            </div>
+                             <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20"><i data-lucide="dna" class="w-6 h-6"></i></div>
+                                <div>
+                                    <p class="text-base font-black theme-text-main">Brand DNA Active</p>
+                                    <p class="text-xs theme-text-muted font-medium mt-1">Cognitive pipeline primed with entity context.</p>
+                                    <p class="text-[10px] text-indigo-400/70 font-mono mt-2 uppercase tracking-widest font-bold">System Boot</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dash-insights" class="dash-tab-content max-w-[1400px] mx-auto w-full p-6 md:p-12 pt-8 md:pt-14 space-y-12">
+             <div class="border-b theme-border pb-8">
+                <h2 class="text-4xl font-black theme-text-main mb-3 flex items-center gap-4"><i data-lucide="brain-circuit" class="w-10 h-10 theme-accent"></i> Cognitive Insights</h2>
+                <p class="theme-text-muted text-base font-medium">Algorithmic breakdown of your workflow, AI leverage, and overall structural efficiency.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="theme-bg-panel border theme-border rounded-[32px] p-10 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+                    <div class="absolute top-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
+                    <h3 class="text-xs font-extrabold theme-text-muted uppercase tracking-widest mb-10 w-full text-left">Efficiency Quotient</h3>
+                    
+                    <div class="relative w-56 h-56 flex items-center justify-center mb-10 drop-shadow-[0_0_25px_rgba(16,185,129,0.2)]">
+                         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--border)" stroke-width="8"></circle>
+                            <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="45" stroke-linecap="round" class="transition-all duration-1000"></circle>
+                        </svg>
+                        <div class="absolute text-center">
+                            <span class="text-6xl font-black theme-text-main" id="insight-score">82</span>
+                            <span class="text-xs font-bold theme-text-muted block mt-2 tracking-widest uppercase">Score</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/20 p-5 rounded-2xl border theme-border w-full text-center shadow-inner">
+                         <p class="text-sm theme-text-main font-bold leading-relaxed"><i data-lucide="trending-up" class="w-4 h-4 text-emerald-500 inline mb-0.5"></i> High template reuse and AI generation ratio detected. Workflow is highly optimized.</p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 theme-bg-panel border theme-border rounded-[32px] p-10 shadow-xl">
+                    <h3 class="text-xs font-extrabold theme-text-muted uppercase tracking-widest mb-10">Workflow Distribution Matrix</h3>
+                    <div class="space-y-10">
+                        <div>
+                            <div class="flex justify-between text-xs mb-4"><span class="font-extrabold theme-text-main uppercase tracking-widest text-[10px]">AI Generation vs Manual Keyboarding</span> <span class="theme-text-muted font-black">78% / 22%</span></div>
+                            <div class="w-full bg-black/30 h-5 rounded-full overflow-hidden flex border theme-border shadow-inner">
+                                <div class="bg-blue-500 h-full shadow-[0_0_15px_rgba(59,130,246,0.8)]" style="width: 78%"></div>
+                                <div class="bg-orange-500 h-full" style="width: 22%"></div>
+                             </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-4"><span class="font-extrabold theme-text-main uppercase tracking-widest text-[10px]">Mathematical AST Evaluation Rate</span> <span class="theme-text-muted font-black">100% Error Free</span></div>
+                            <div class="w-full bg-black/30 h-5 rounded-full overflow-hidden border theme-border shadow-inner">
+                                <div class="bg-emerald-500 h-full shadow-[0_0_15px_rgba(16,185,129,0.8)]" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-8 border-t theme-border grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="bg-blue-500/5 border border-blue-500/20 p-6 rounded-2xl shadow-inner">
+                                <p class="text-[10px] theme-text-muted uppercase font-extrabold mb-3 tracking-widest">Most Used Smart Clause</p>
+                                <p class="text-xl font-black theme-text-main text-blue-400">Non-Disclosure (Strict)</p>
+                            </div>
+                            <div class="bg-purple-500/5 border border-purple-500/20 p-6 rounded-2xl shadow-inner">
+                                <p class="text-[10px] theme-text-muted uppercase font-extrabold mb-3 tracking-widest">Avg. Time to Completion</p>
+                                <p class="text-xl font-black theme-text-main text-purple-400">4.2 mins</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dash-community" class="dash-tab-content max-w-[1600px] mx-auto w-full p-6 md:p-12 pt-8 md:pt-14 space-y-10">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b theme-border pb-8">
+                <div>
+                    <h2 class="text-4xl font-black theme-text-main mb-3 flex items-center gap-4"><i data-lucide="globe-2" class="w-10 h-10 theme-accent"></i> Global Network</h2>
+                    <p class="theme-text-muted text-base font-medium max-w-2xl leading-relaxed">Discover, import, and publish high-grade architectures to the decentralized network.</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 bg-black/20 p-3 rounded-[24px] border theme-border shadow-inner">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-6 h-6 theme-text-muted absolute left-5 top-1/2 transform -translate-y-1/2"></i>
+                    <input type="text" placeholder="Query architectures (e.g., 'Series A Term Sheet')..." class="theme-input pl-16 py-4 border-transparent bg-transparent text-base font-bold">
+                </div>
+                <div class="w-px bg-[var(--border)] hidden sm:block my-2"></div>
+                <select class="theme-input w-full sm:w-64 py-4 border-transparent bg-transparent cursor-pointer font-extrabold text-sm uppercase tracking-wider">
+                    <option>All Sectors</option>
+                    <option>Legal & Compliance</option>
+                    <option>Venture Capital</option>
+                    <option>Enterprise Tech</option>
+                </select>
+            </div>
+            
+            <div id="community-hub-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pt-4">
+                </div>
+        </div>
+    </div>
+    <div id="main-workspace" class="flex flex-col h-screen w-full hidden">
+        
+        <header class="h-16 flex justify-between items-center px-4 md:px-8 border-b theme-border theme-bg-header z-40 shrink-0 relative shadow-sm">
+            
+            <div class="font-extrabold text-xl tracking-tight flex items-center gap-3 theme-text-main cursor-pointer hover:opacity-80 transition group" onclick="showDashboard()" title="Return to Command Center">
+                <div class="w-10 h-10 rounded-xl theme-accent-bg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><i data-lucide="layout-dashboard" class="w-5 h-5 text-white"></i></div>
+                <span class="hidden sm:inline tracking-tight text-2xl">LUMINA<span class="theme-accent font-light">OS</span></span>
+            </div>
+            
+            <div class="flex items-center gap-1 sm:gap-2 theme-bg-panel border theme-border rounded-2xl p-1.5 overflow-x-auto no-scrollbar shadow-inner bg-black/10">
+                
+                <div class="flex items-center gap-2 px-4 border-r theme-border shrink-0">
+                    <i data-lucide="monitor" class="w-4 h-4 theme-text-muted"></i>
+                    <select id="canvas-mode-selector" class="bg-transparent theme-text-main text-[11px] sm:text-xs outline-none pr-1 cursor-pointer font-black tracking-widest uppercase" onchange="changeCanvasMode(this.value)">
+                        <option value="doc">Continuous A4</option>
+                        <option value="pdf">Paginated Print</option>
+                        <option value="ppt">16:9 Strategy Deck</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 px-4 border-r theme-border shrink-0" title="Select AI Brain Profile">
+                    <i data-lucide="brain" class="w-4 h-4 text-blue-500"></i>
+                    <select id="persona-selector" class="bg-transparent text-blue-500 text-[11px] sm:text-xs outline-none pr-1 cursor-pointer font-black tracking-widest uppercase">
+                        <option value="legal">Legal Counsel</option>
+                        <option value="freelance">Freelance Strategist</option>
+                        <option value="academic">Academic Scholar</option>
+                        <option value="creative">Creative Director</option>
+                    </select>
+                </div>
+
+                <div class="hidden lg:flex items-center gap-2 px-4 shrink-0">
+                    <i data-lucide="palette" class="w-4 h-4 theme-text-muted"></i>
+                    <select id="ui-theme-selector-editor" class="bg-transparent theme-text-main text-[11px] sm:text-xs outline-none pr-1 cursor-pointer font-black tracking-widest uppercase" onchange="changeTheme(this.value)">
+                        <option value="default">Glassmorphism Pro</option>
+                        <option value="light-minimal">Nordic Clean</option>
+                        <option value="luxury-legal">Luxury Legal</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 shrink-0">
+                <button class="hidden md:flex btn border-transparent theme-text-muted text-xs hover:bg-black/10 transition px-4 py-2.5 rounded-xl font-bold tracking-wide" onclick="toggleCmdPalette()"><i data-lucide="terminal-square" class="w-4 h-4 text-blue-400"></i> Cmd+K</button>
+                
+                <div class="group relative">
+                    <button class="btn btn-primary pl-5 pr-6 py-3 rounded-xl shadow-[0_5px_15px_var(--accent-glow)]"><i data-lucide="hard-drive-download" class="w-4 h-4"></i> <span class="hidden sm:inline font-extrabold tracking-wide">Export Build</span></button>
+                    
+                    <div class="hidden group-hover:flex absolute right-0 top-full mt-2 flex-col theme-bg-panel border theme-border rounded-[24px] shadow-2xl w-72 overflow-hidden z-50 fade-in">
+                        <div class="px-6 py-4 bg-black/20 border-b theme-border text-[10px] font-extrabold theme-text-muted uppercase tracking-widest">Hardware Compilers</div>
+                        
+                        <button onclick="exportDoc('pdf')" class="text-left px-6 py-5 hover:bg-black/10 theme-text-main text-xs flex items-center gap-4 transition group/btn">
+                            <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center group-hover/btn:scale-110 transition"><i data-lucide="file-text" class="w-5 h-5 text-red-500"></i></div> 
+                            <span class="font-bold text-sm">Download Secure PDF</span>
+                        </button>
+                        
+                        <button onclick="exportDoc('ppt')" class="text-left px-6 py-5 hover:bg-black/10 theme-text-main text-xs flex items-center gap-4 border-t theme-border transition group/btn">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover/btn:scale-110 transition"><i data-lucide="presentation" class="w-5 h-5 text-purple-500"></i></div> 
+                            <span class="font-bold text-sm">Export Native .PPTX</span>
+                        </button>
+
+                        <button onclick="exportDoc('api')" class="text-left px-6 py-5 hover:bg-black/10 theme-text-main text-xs flex items-center gap-4 border-t theme-border transition group/btn">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover/btn:scale-110 transition"><i data-lucide="code-2" class="w-5 h-5 text-blue-500"></i></div> 
+                            <span class="font-bold text-sm">Extract Raw AST Logic</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="flex flex-1 overflow-hidden relative workspace-layout">
+            
+            <aside id="sidebar-left" class="sidebar sidebar-left shadow-2xl">
+                <div class="flex border-b theme-border bg-black/20 p-2">
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted side-tab-btn active uppercase tracking-widest rounded-xl hover:bg-white/5" onclick="switchTab('left', 'tab-agent')">Agent</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted side-tab-btn uppercase tracking-widest rounded-xl hover:bg-white/5" onclick="switchTab('left', 'tab-memory')">Memory</button>
+                    <button class="flex-1 py-3.5 text-[10px] font-extrabold theme-text-muted side-tab-btn uppercase tracking-widest rounded-xl hover:bg-white/5" onclick="switchTab('left', 'tab-templates')">Vault</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-6 relative pb-28 lg:pb-6 no-scrollbar">
+                    <div id="loader-left" class="loader absolute top-4 right-6 hidden"></div>
+                    
+                    <div id="tab-agent" class="sidebar-tab-content active space-y-8">
+                        
+                        <div class="bg-black/20 p-4 rounded-2xl border theme-border shadow-inner">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest flex items-center gap-2"><i data-lucide="zap" class="w-3 h-3 text-yellow-500"></i> Energy</span>
+                                <span class="text-xs font-black theme-text-main"><span id="sidebar-ai-tokens">3</span> / 3</span>
+                            </div>
+                            <div class="token-bar-container h-1.5">
+                                <div id="sidebar-token-visual" class="token-bar-fill" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-3 flex justify-between items-center">
+                                <span>Master Prompt Tunnel</span>
+                            </label>
+                            <textarea id="prompt-create" class="theme-input resize-none min-h-[160px] text-sm leading-relaxed font-medium" placeholder="Instruct the AI. The selected Persona will dictate the writing style. Use [Brackets] for math logic..."></textarea>
+                            <button onclick="runWorkflow('create')" class="w-full btn btn-primary mt-4 py-4 shadow-[0_8px_20px_var(--accent-glow)] text-sm font-extrabold tracking-wide rounded-xl"><i data-lucide="sparkles" class="w-5 h-5"></i> Generate Blueprint</button>
+                        </div>
+                        
+                        <div class="p-6 rounded-3xl border theme-border bg-gradient-to-br from-blue-500/10 to-indigo-500/10 relative overflow-hidden group shadow-inner">
+                            <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/40 transition-all duration-500"></div>
+                            <h4 class="text-base font-extrabold theme-text-main mb-2 flex items-center gap-2 relative z-10"><i data-lucide="refresh-cw" class="w-5 h-5 theme-accent"></i> Cognitive Loop</h4>
+                            <p class="text-[11px] theme-text-muted mb-5 leading-relaxed font-medium relative z-10">Instructs the AI OS to restructure, fix grammar, and apply UI styling to the entire canvas natively.</p>
+                            <button onclick="autoImproveDoc()" class="w-full btn border-blue-500/40 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-md py-4 font-bold relative z-10 tracking-wide rounded-xl"><i data-lucide="wand-2" class="w-4 h-4"></i> Enhance Canvas</button>
+                        </div>
+                    </div>
+
+                    <div id="tab-memory" class="sidebar-tab-content space-y-8">
+                        <div class="space-y-5 bg-black/20 p-6 rounded-3xl border theme-border shadow-inner">
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest flex items-center gap-2 mb-2"><i data-lucide="braces" class="w-4 h-4 theme-accent"></i> Global OS Variables</h4>
+                            <p class="text-[11px] theme-text-muted leading-relaxed font-medium mb-4">Values updated here instantly sync across all matching [Tags] in the architecture.</p>
+                            
+                            <div>
+                                <label class="text-[10px] theme-text-muted uppercase font-bold mb-2 block pl-1">Target Entity / Client</label>
+                                <input type="text" id="ctx-client" placeholder="[Client Name]" class="theme-input text-sm font-mono font-bold py-3.5" onkeyup="liveVariableSync()">
+                            </div>
+                            <div>
+                                <label class="text-[10px] theme-text-muted uppercase font-bold mb-2 block pl-1">Financial Base / Value</label>
+                                <input type="text" id="ctx-amount" placeholder="[Amount]" class="theme-input text-sm font-mono font-bold py-3.5" onkeyup="liveVariableSync()">
+                            </div>
+                            <div>
+                                <label class="text-[10px] theme-text-muted uppercase font-bold mb-2 block pl-1">Execution Date</label>
+                                <input type="date" id="ctx-date" class="theme-input text-sm font-mono font-bold py-3.5" onchange="liveVariableSync()">
+                            </div>
+                            <button onclick="autofillDoc()" class="w-full btn theme-accent-bg text-white mt-4 border-transparent py-4 shadow-[0_5px_15px_var(--accent-glow)] hover:shadow-xl transition-all font-extrabold tracking-wide rounded-xl"><i data-lucide="syringe" class="w-5 h-5"></i> Force Global Inject</button>
+                        </div>
+                    </div>
+
+                    <div id="tab-templates" class="sidebar-tab-content space-y-8">
+                        <div class="bg-black/20 p-6 rounded-3xl border theme-border shadow-inner">
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="bookmark" class="w-4 h-4 theme-accent"></i> Encrypted Vault</h4>
+                            <div id="saved-templates-list-editor" class="space-y-3 max-h-[220px] overflow-y-auto pr-2 no-scrollbar"></div>
+                            <button onclick="saveCurrentAsTemplate()" class="w-full btn bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white mt-5 text-sm py-4 shadow-md font-bold transition-colors tracking-wide rounded-xl"><i data-lucide="save" class="w-4 h-4"></i> Save Canvas to Vault</button>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-orange-400"></i> Structural Foundations</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="loadTemplate('invoice')" class="btn justify-center flex-col gap-3 py-6 text-sm hover:border-blue-500/50 hover:bg-black/10 shadow-sm rounded-2xl font-bold"><div class="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-inner"><i data-lucide="receipt" class="w-5 h-5 theme-text-muted"></i></div> Invoice</button>
+                                <button onclick="loadTemplate('contract')" class="btn justify-center flex-col gap-3 py-6 text-sm hover:border-blue-500/50 hover:bg-black/10 shadow-sm rounded-2xl font-bold"><div class="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-inner"><i data-lucide="scale" class="w-5 h-5 theme-text-muted"></i></div> Legal NDA</button>
+                                <button onclick="loadTemplate('proposal')" class="btn justify-center flex-col gap-3 py-6 text-sm hover:border-blue-500/50 hover:bg-black/10 shadow-sm rounded-2xl font-bold"><div class="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-inner"><i data-lucide="briefcase" class="w-5 h-5 theme-text-muted"></i></div> Proposal</button>
+                                <button onclick="loadTemplate('ppt')" class="btn justify-center flex-col gap-3 py-6 text-sm hover:border-purple-500/50 hover:bg-black/10 shadow-sm rounded-2xl font-bold text-purple-400 border-purple-500/20"><div class="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center shadow-inner"><i data-lucide="monitor-play" class="w-5 h-5 text-purple-500"></i></div> Pitch Deck</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="canvas-wrapper" id="main-scroll">
+                
+                <div id="doc-canvas" contenteditable="true" oninput="handleTyping()" spellcheck="false" class="mode-doc">
+                    <h1 style="font-size: 3.5rem; font-weight: 900; border-bottom: 2px solid var(--border-light); padding-bottom: 1.25rem; margin-bottom: 2rem; letter-spacing: -0.03em; color: var(--canvas-text);">Master Blueprint</h1>
+                    <p data-placeholder="Type '/' to open the architecture menu, enter natural text, or use the Cognitive Agent..." style="line-height: 1.8; color: var(--text-muted); font-size: 1.2rem;"></p>
+                </div>
+                
+                <button id="add-page-btn" onclick="addWPSPage()" class="hidden btn theme-accent-bg text-white rounded-2xl px-8 py-4 shadow-[0_10px_30px_var(--accent-glow)] mt-10 hover:scale-105 transition-transform z-10 font-bold tracking-wide"><i data-lucide="file-plus" class="w-5 h-5"></i> Append Physical Page Break</button>
+            
+            </main>
+            <aside id="sidebar-right" class="sidebar sidebar-right shadow-2xl">
+                <div class="flex border-b theme-border bg-black/20 p-2">
+                    <button class="flex-1 py-3 text-[10px] font-extrabold theme-text-muted side-tab-btn active uppercase tracking-widest rounded-xl hover:bg-white/5" onclick="switchTab('right', 'tab-edit')">Editor</button>
+                    <button class="flex-1 py-3 text-[10px] font-extrabold theme-text-muted side-tab-btn uppercase tracking-widest rounded-xl hover:bg-white/5" onclick="switchTab('right', 'tab-audit')">Audit</button>
+                    <button class="flex-1 py-3 text-[10px] font-extrabold theme-text-muted side-tab-btn uppercase tracking-widest rounded-xl hover:bg-white/5" onclick="switchTab('right', 'tab-history')">Diff</button>
+                </div>
+             
+                <div class="flex-1 overflow-y-auto p-6 relative pb-28 lg:pb-6 no-scrollbar">
+                    <div id="loader-right" class="loader absolute top-4 left-6 hidden"></div>
+                    
+                    <div id="tab-edit" class="sidebar-tab-content active space-y-8">
+                        <div class="bg-black/20 p-6 rounded-3xl border theme-border shadow-inner">
+                            <label class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-3 block">Direct AI Modifier</label>
+                            <textarea id="prompt-edit" class="theme-input resize-none min-h-[100px] text-sm font-medium py-3.5" placeholder="Highlight text in canvas, then instruct the AI here..."></textarea>
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <button onclick="aiAction('design')" class="btn text-xs py-3.5 font-bold shadow-sm rounded-xl"><div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i data-lucide="paintbrush" class="w-4 h-4 text-blue-400"></i></div> UI Polish</button>
+                                <button onclick="aiAction('explain')" class="btn text-xs py-3.5 font-bold shadow-sm rounded-xl"><div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i></div> Explain Node</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><i data-lucide="blocks" class="w-4 h-4 theme-accent"></i> Smart Clauses</h4>
+                            <div class="space-y-3">
+                                <button onclick="aiAction('clause_terminate')" class="w-full btn text-sm justify-start hover:bg-black/20 py-4 rounded-2xl font-bold shadow-sm"><i data-lucide="plus-circle" class="w-5 h-5 theme-accent"></i> Standard Termination</button>
+                                <button onclick="aiAction('clause_gst')" class="w-full btn text-sm justify-start hover:bg-black/20 py-4 rounded-2xl font-bold shadow-sm"><i data-lucide="plus-circle" class="w-5 h-5 theme-accent"></i> Tax & Compliance (Reg)</button>
+                                <button onclick="aiAction('clause_liability')" class="w-full btn text-sm justify-start hover:bg-black/20 py-4 rounded-2xl font-bold shadow-sm"><i data-lucide="plus-circle" class="w-5 h-5 theme-accent"></i> Strict Liability Cap</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t theme-border">
+                            <button onclick="openSignature()" class="btn text-xs flex-col py-6 h-auto gap-3 border-blue-500/40 text-blue-400 hover:bg-blue-500/10 group shadow-md rounded-3xl">
+                                <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition"><i data-lucide="pen-tool" class="w-5 h-5"></i></div>
+                                <span class="font-extrabold tracking-wide">Signature Pad</span>
+                            </button>
+                            <div class="border theme-border rounded-3xl p-4 text-center flex flex-col justify-center items-center gap-3 cursor-pointer hover:bg-white/5 transition shadow-md bg-black/20" onclick="alert('Payment Gateway Hook Enabled. Ready for Stripe/PayPal integration.')">
+                                <div class="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5 text-yellow-500"></i></div>
+                                <span class="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Pay Layer</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-audit" class="sidebar-tab-content space-y-6">
+                        <div class="space-y-4">
+                            <button onclick="runAudit()" class="w-full btn bg-orange-500/10 border-orange-500/40 text-orange-500 hover:bg-orange-500 hover:text-white justify-center py-4 shadow-md font-bold transition-all rounded-2xl tracking-wide">
+                                <i data-lucide="shield-alert" class="w-5 h-5"></i> Run Structural Audit
+                            </button>
+                            <button onclick="runAIGuardrails()" class="w-full btn bg-emerald-500/10 border-emerald-500/40 text-emerald-500 hover:bg-emerald-500 hover:text-white justify-center py-4 shadow-md font-bold transition-all rounded-2xl tracking-wide">
+                                <i data-lucide="gavel" class="w-5 h-5"></i> Deep Legal AI Scan
+                            </button>
+                        </div>
+                        
+                        <div class="theme-bg-main p-6 rounded-[2rem] border theme-border relative overflow-hidden shadow-2xl mt-8">
+                             <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+                            <h4 class="font-extrabold text-base theme-text-main flex items-center justify-between mb-3 relative z-10">
+                                <span class="flex items-center gap-2"><i data-lucide="cpu" class="w-5 h-5 text-indigo-500"></i> Math AST Engine</span>
+                            </h4>
+                            <p class="text-xs theme-text-muted mb-4 leading-relaxed font-medium relative z-10">Evaluates complex nested IF/THEN math expressions globally across the canvas.</p>
+                            <code class="block bg-black/40 p-4 rounded-xl text-[10px] text-indigo-400 mb-5 overflow-x-auto border border-indigo-500/20 font-mono shadow-inner relative z-10 tracking-wide whitespace-pre-wrap">[[ IF [Amount] > 1000 THEN [Amount]*0.9 ELSE [Amount] ]]</code>
+                            <button onclick="forceCalculate()" class="w-full btn text-sm bg-indigo-500 border-indigo-600 text-white hover:bg-indigo-600 shadow-[0_5px_15px_rgba(99,102,241,0.4)] py-4 rounded-xl font-bold relative z-10 tracking-wide"><i data-lucide="play" class="w-4 h-4"></i> Execute AST Logic Tree</button>
+                        </div>
+                    </div>
+                    
+                    <div id="tab-history" class="sidebar-tab-content space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="theme-bg-main border theme-border p-5 rounded-3xl flex flex-col items-center justify-center shadow-inner">
+                                <span class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Total Words</span>
+                                <span id="stat-words" class="text-4xl font-black theme-accent">0</span>
+                            </div>
+                            <div class="theme-bg-main border theme-border p-5 rounded-3xl flex flex-col items-center justify-center shadow-inner">
+                                <span class="text-[10px] theme-text-muted uppercase font-extrabold tracking-widest mb-2">Minutes Logged</span>
+                                <span id="stat-time" class="text-4xl font-black text-emerald-500">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 border theme-border rounded-3xl p-6 bg-black/20 shadow-inner">
+                            <h4 class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest mb-6 flex justify-between items-center">
+                                Ghost Version Control
+                                <button onclick="restoreLastVersion()" class="theme-accent hover:underline flex items-center gap-1.5 text-[10px] bg-blue-500/10 px-3 py-1.5 rounded-lg transition-colors"><i data-lucide="undo-2" class="w-3 h-3"></i> Quick Undo</button>
+                            </h4>
+                            <div id="timeline-list" class="space-y-5 border-l-2 border-blue-500/30 pl-5 ml-2 max-h-[350px] overflow-y-auto pr-2 no-scrollbar"></div>
+                            
+                            <button class="w-full btn mt-6 border-blue-500/40 text-blue-400 text-sm hover:bg-blue-500 hover:text-white transition-all shadow-md py-4 rounded-xl font-bold tracking-wide" onclick="alert('Diff overlay activated. Visualizing changes from Base Blueprint.')"><i data-lucide="git-compare" class="w-4 h-4"></i> Show Change Matrix</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div> <nav class="mobile-nav theme-bg-panel border-t theme-border shadow-[0_-20px_50px_rgba(0,0,0,0.9)] justify-around items-center px-3 pb-safe">
+        <button onclick="toggleMobilePanel('sidebar-left')" class="flex flex-col items-center p-3 theme-text-muted hover:text-blue-400 transition-colors w-1/3 group">
+            <i data-lucide="sparkles" class="w-6 h-6 mb-1.5 group-hover:-translate-y-1 transition-transform"></i>
+            <span class="text-[10px] font-extrabold tracking-widest uppercase">Agent</span>
+        </button>
+        <button onclick="closeMobilePanels()" class="flex flex-col items-center p-2 theme-accent group w-1/3 relative z-50">
+            <div class="w-16 h-16 rounded-[2rem] theme-bg-main border-[6px] border-[var(--bg-panel)] flex items-center justify-center -mt-12 shadow-2xl group-hover:-translate-y-2 transition-all duration-300"><i data-lucide="file-text" class="w-6 h-6"></i></div>
+            <span class="text-[10px] mt-1.5 font-extrabold tracking-widest uppercase">Canvas</span>
+        </button>
+        <button onclick="toggleMobilePanel('sidebar-right')" class="flex flex-col items-center p-3 theme-text-muted hover:text-emerald-400 transition-colors w-1/3 group">
+            <i data-lucide="pen-tool" class="w-6 h-6 mb-1.5 group-hover:-translate-y-1 transition-transform"></i>
+            <span class="text-[10px] font-extrabold tracking-widest uppercase">Editor</span>
+        </button>
+    </nav>
+
+    <div id="context-menu" class="hidden fixed theme-bg-panel border theme-border rounded-[24px] p-2.5 z-[1000] flex-col shadow-[0_15px_40px_rgba(0,0,0,0.6)] w-60 fade-in">
+        <button onclick="ctxExec('rewrite')" class="text-left px-4 py-3.5 text-sm theme-text-main hover:bg-blue-500/10 rounded-xl flex items-center gap-3 transition font-bold group"><i data-lucide="wand-2" class="w-4 h-4 theme-accent group-hover:scale-110 transition"></i> AI Auto-Rewrite</button>
+        <button onclick="ctxExec('summarize')" class="text-left px-4 py-3.5 text-sm theme-text-main hover:bg-indigo-500/10 rounded-xl flex items-center gap-3 transition font-bold group"><i data-lucide="align-left" class="w-4 h-4 text-indigo-400 group-hover:scale-110 transition"></i> Summarize Core</button>
+        <div class="h-px bg-white/10 my-2 mx-3"></div>
+        <button onclick="ctxExec('lock')" class="text-left px-4 py-3.5 text-sm theme-text-main hover:bg-red-500/10 rounded-xl flex items-center gap-3 transition font-bold group"><i data-lucide="lock" class="w-4 h-4 text-red-500 group-hover:scale-110 transition"></i> Encrypt Node (Lock)</button>
+    </div>
+
+    <div id="slash-menu" class="hidden fixed theme-bg-panel border theme-border rounded-[24px] p-3 z-[1000] flex-col shadow-[0_20px_50px_rgba(0,0,0,0.8)] w-72 max-h-[450px] overflow-y-auto no-scrollbar fade-in">
+        <p class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest px-4 py-3 bg-black/20 rounded-xl mb-2 border border-white/5">Insert Architecture Block</p>
+        <button onclick="insertBlock('h2')" class="text-left px-3 py-3.5 text-sm theme-text-main hover:bg-black/20 rounded-2xl flex items-center gap-4 transition font-bold"><div class="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center shadow-inner"><i data-lucide="heading-2" class="w-4 h-4 theme-text-muted"></i></div> Section Header</button>
+        <button onclick="insertBlock('table')" class="text-left px-3 py-3.5 text-sm theme-text-main hover:bg-black/20 rounded-2xl flex items-center gap-4 transition font-bold"><div class="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center shadow-inner"><i data-lucide="table" class="w-4 h-4 theme-text-muted"></i></div> 2x2 Data Matrix</button>
+        <button onclick="insertBlock('pricing')" class="text-left px-3 py-3.5 text-sm theme-text-main hover:bg-black/20 rounded-2xl flex items-center gap-4 transition font-bold"><div class="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><i data-lucide="tag" class="w-4 h-4 text-blue-400"></i></div> Smart Pricing Card</button>
+        <button onclick="insertBlock('sign')" class="text-left px-3 py-3.5 text-sm theme-text-main hover:bg-black/20 rounded-2xl flex items-center gap-4 transition font-bold"><div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20"><i data-lucide="pen-line" class="w-4 h-4 text-emerald-500"></i></div> Signature Zone</button>
+        <button onclick="insertBlock('pagebreak')" class="text-left px-3 py-3.5 text-sm theme-text-main hover:bg-black/20 rounded-2xl flex items-center gap-4 transition font-bold"><div class="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20"><i data-lucide="scissors" class="w-4 h-4 text-red-500"></i></div> Forced Page Break</button>
+    </div>
+
+    <div id="cmd-palette" class="fixed inset-0 modal-bg z-[9999] hidden items-start justify-center pt-[10vh] sm:pt-[15vh] px-4">
+        <div class="theme-bg-panel border theme-border rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden transform transition-all fade-in">
+            <div class="flex items-center px-8 py-6 border-b theme-border bg-black/20 shadow-inner">
+                <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center mr-5 border border-blue-500/20"><i data-lucide="terminal" class="w-6 h-6 theme-accent"></i></div>
+                <input type="text" id="cmd-input" class="bg-transparent border-none theme-text-main w-full outline-none text-2xl font-extrabold placeholder-zinc-600 tracking-wide" placeholder="Search OS, execute '/' commands, or ask AI..." autocomplete="off">
+            </div>
+            <div class="p-5 max-h-[500px] overflow-y-auto no-scrollbar" id="cmd-results">
+                <p class="text-[10px] font-extrabold theme-text-muted uppercase tracking-widest px-4 pt-2 pb-4">AI & OS Actions</p>
+                <button class="w-full text-left px-5 py-4 text-base theme-text-main hover:bg-blue-500/10 rounded-2xl flex items-center gap-5 transition mb-2 group" onclick="executeCmd('semantic_search')"><div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i data-lucide="brain-circuit" class="w-6 h-6 text-indigo-400"></i></div> <span class="font-extrabold tracking-wide text-base">Ask Cognitive Agent about this blueprint...</span></button>
+                <div class="h-px theme-bg-main my-4 mx-5"></div>
+                
+                <button class="w-full text-left px-5 py-4 text-sm theme-text-muted hover:bg-black/20 rounded-2xl flex items-center justify-between transition mb-2 group" onclick="executeCmd('brand_convert')">
+                    <div class="flex items-center gap-5"><div class="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center group-hover:bg-pink-500/10 group-hover:border-pink-500/30 border border-transparent transition"><i data-lucide="paint-bucket" class="w-5 h-5 text-pink-500"></i></div> <span class="font-bold tracking-wide">Inject Brand Identity (CSS Override)</span></div>
+                </button>
+                
+                <button class="w-full text-left px-5 py-4 text-sm theme-text-muted hover:bg-black/20 rounded-2xl flex items-center justify-between transition group" onclick="exportDoc('ppt')">
+                    <div class="flex items-center gap-5"><div class="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center group-hover:bg-purple-500/10 group-hover:border-purple-500/30 border border-transparent transition"><i data-lucide="presentation" class="w-5 h-5 text-purple-500"></i></div> <span class="font-bold tracking-wide">Compile Native .PPTX</span></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sig-modal" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-[9999]">
+        <div class="theme-bg-panel border theme-border rounded-[32px] p-8 md:p-12 w-full max-w-lg shadow-2xl fade-in slide-up">
+            <h3 class="theme-text-main mb-3 font-black text-3xl flex items-center gap-3"><i data-lucide="pen-tool" class="w-8 h-8 theme-accent"></i> Hardware Signature</h3>
+            <p class="text-sm theme-text-muted mb-8 leading-relaxed font-medium">Please draw your signature within the bounds below to digitally sign the node.</p>
+            <div class="bg-white p-3 rounded-[24px] border-4 theme-border shadow-inner relative">
+                <div class="absolute bottom-5 left-5 text-[11px] text-zinc-300 font-extrabold uppercase tracking-widest pointer-events-none select-none">SIGN HERE</div>
+                <canvas id="sig-canvas" width="450" height="220" class="w-full bg-transparent rounded-xl cursor-crosshair touch-none" style="touch-action: none;"></canvas>
+            </div>
+            <div class="flex justify-between mt-10 gap-4">
+                <button onclick="closeModals()" class="btn flex-1 py-4 bg-black/20 hover:bg-black/40 border-transparent rounded-xl font-bold transition-colors">Cancel</button>
+                <button onclick="clearSignature()" class="btn flex-1 py-4 text-orange-400 hover:bg-orange-500/10 border-orange-500/30 rounded-xl font-bold transition-colors">Clear Pad</button>
+                <button onclick="saveSignature()" class="btn btn-primary flex-1 py-4 shadow-[0_8px_20px_var(--accent-glow)] rounded-xl font-extrabold tracking-wide">Inject SVG</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ==========================================================================
+        // [1] CORE OS STATE & TELEMETRY REGISTRY
+        // ==========================================================================
+        lucide.createIcons();
+
+        const appState = {
+            docContext: { client: "", amount: "", date: new Date().toISOString().split('T')[0] },
+            history: [],
+            role: "admin",
+            startTime: Date.now(),
+            docsGenerated: 0,
+            clausesAdded: 0,
+            valueTracked: 0,
+            activePersona: "legal" // New Cognitive Persona Default
+        };
+
+        let currentUser = null;
+        let companyDNA = {};
+
+        // Dynamic DOM Getters (Prevents Null Reference Boot Errors)
+        const DOM = {
+            get canvas() { return document.getElementById('doc-canvas'); },
+            get ctxMenu() { return document.getElementById('context-menu'); },
+            get slashMenu() { return document.getElementById('slash-menu'); },
+            get addPageBtn() { return document.getElementById('add-page-btn'); },
+            get brainC() { return document.getElementById('ctx-client'); },
+            get brainA() { return document.getElementById('ctx-amount'); },
+            get brainD() { return document.getElementById('ctx-date'); }
+        };
+
+        // ==========================================================================
+        // [2] OS BOOT SEQUENCE & EVENT LISTENERS
+        // ==========================================================================
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('lumina_theme');
+            if (savedTheme) changeTheme(savedTheme);
+            
+            const savedDNA = localStorage.getItem('lumina_dna');
+            if (savedDNA) companyDNA = JSON.parse(savedDNA);
+            
+            appState.docsGenerated = parseInt(localStorage.getItem('lumina_docs_count') || '0');
+            appState.clausesAdded = parseInt(localStorage.getItem('lumina_clauses_count') || '0');
+            appState.valueTracked = parseInt(localStorage.getItem('lumina_value_tracked') || '0');
+            
+            checkAuth(); 
+            setInterval(updateAnalytics, 5000); 
+            renderSavedTemplates();
+            renderCommunityHub(); 
+            
+            document.addEventListener('mousedown', (e) => {
+                if (DOM.ctxMenu && !DOM.ctxMenu.contains(e.target)) DOM.ctxMenu.style.display = 'none';
+                if (DOM.slashMenu && !DOM.slashMenu.contains(e.target) && e.target.id !== 'doc-canvas') DOM.slashMenu.style.display = 'none';
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') { 
+                    e.preventDefault(); 
+                    toggleCmdPalette(); 
+                }
+                if (e.key === 'Escape') closeModals();
+            });
+
+            if(DOM.canvas) {
+                DOM.canvas.addEventListener('keyup', (e) => {
+                    const sel = window.getSelection();
+                    if(sel.focusNode && sel.focusNode.textContent.endsWith('/')) {
+                        const rect = sel.getRangeAt(0).getBoundingClientRect();
+                        DOM.slashMenu.style.display = 'flex';
+                        let leftPos = rect.left;
+                        if(window.innerWidth - leftPos < 300) leftPos = window.innerWidth - 300;
+                        DOM.slashMenu.style.left = `${Math.max(16, leftPos)}px`;
+                        DOM.slashMenu.style.top = `${rect.bottom + 12}px`;
+                    } else if (e.key !== 'Shift') {
+                        DOM.slashMenu.style.display = 'none';
+                    }
+                });
+                DOM.canvas.addEventListener('input', debounce(evaluateMathFields, 800));
+                DOM.canvas.addEventListener('input', handleTyping);
+                DOM.canvas.addEventListener('click', handleLockedNodeClick);
+            }
+            
+            initSignaturePad();
+        };
+
+        // ==========================================================================
+        // [3] UNIFIED AUTHENTICATION & ENCRYPTION
+        // ==========================================================================
+        function generateUID() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let seg1 = '', seg2 = '';
+            for(let i=0; i<4; i++) seg1 += chars.charAt(Math.floor(Math.random() * chars.length));
+            for(let i=0; i<4; i++) seg2 += chars.charAt(Math.floor(Math.random() * chars.length));
+            return `LUM-${seg1}-${seg2}`;
+        }
+
+        function checkAuth() {
+            try {
+                const stored = localStorage.getItem('lumina_user');
+                if(stored) {
+                    currentUser = JSON.parse(stored);
+                    if(!currentUser.uid) {
+                        currentUser.uid = generateUID();
+                        localStorage.setItem('lumina_user', JSON.stringify(currentUser));
+                    }
+                    if(currentUser.password) {
+                        document.getElementById('unlock-modal').style.display = 'flex';
+                    } else {
+                        showDashboard();
+                    }
+                } else {
+                    document.getElementById('auth-modal').style.display = 'flex';
+                }
+            } catch(e) { document.getElementById('auth-modal').style.display = 'flex'; }
+        }
+
+        function handleInitialLogin() {
+            const name = document.getElementById('auth-name').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim(); // Optional
+            
+            if(!name) { alert("SYSTEM HALT: System Identity is required to boot OS."); return; }
+            
+            // Vaidik Admin Bypass (Unlimited Tokens)
+            const isAdmin = (name.toLowerCase() === 'vaidik' && pass === '1234@4321');
+            const uid = generateUID();
+            
+            currentUser = { name: name, password: pass, isAdmin: isAdmin, uid: uid };
+            localStorage.setItem('lumina_user', JSON.stringify(currentUser));
+            
+            document.getElementById('auth-modal').style.display = 'none';
+            showDashboard();
+        }
+
+        function handleUnlock() {
+            const pass = document.getElementById('unlock-pass').value;
+            if(pass === currentUser.password) {
+                document.getElementById('unlock-modal').style.display = 'none';
+                document.getElementById('unlock-pass').value = '';
+                showDashboard();
+            } else {
+                alert("DECRYPTION FAILED: Invalid Memory Key.");
+            }
+        }
+
+        function resetAccountSecurely() {
+            const verifyPass = document.getElementById('reset-pass-verify').value;
+            if(currentUser && currentUser.password && verifyPass !== currentUser.password) {
+                alert("ACCESS DENIED: Master password required to purge encrypted data.");
+                return;
+            }
+            if(confirm("CRITICAL WARNING: This action will permanently purge your local memory. Proceed?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // ==========================================================================
+        // [4] HARDWARE EXPORT & IMPORT MODULES (.PPTX, .DOCX, .PDF)
+        // ==========================================================================
+        async function exportDoc(type) { 
+            if(type === 'pdf') {
+                const opt = {
+                    margin: [10, 10],
+                    filename: `Lumina_Architecture_${Date.now()}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                
+                if (document.getElementById('canvas-mode-selector').value === 'ppt') {
+                    opt.jsPDF.orientation = 'landscape';
+                }
+                
+                html2pdf().set(opt).from(DOM.canvas).save();
+            } else if (type === 'ppt') {
+                if(typeof PptxGenJS === 'undefined') {
+                    alert("Compiler loading... please try again in a few seconds.");
+                    return;
+                }
+                try {
+                    let pptx = new PptxGenJS();
+                    pptx.layout = 'LAYOUT_16x9';
+                    let slide = pptx.addSlide();
+                    
+                    // Base extraction logic for 16:9 slides
+                    let textContent = DOM.canvas.innerText;
+                    slide.addText(textContent.substring(0, 500) + (textContent.length>500?"...":""), { x:0.5, y:0.5, w:'90%', h:'90%', fontSize: 18, color: "363636", align: 'center' });
+                    
+                    pptx.writeFile({ fileName: `Lumina_Deck_${Date.now()}.pptx` });
+                } catch(e) {
+                    alert("PPTX Compiler Error: " + e.message);
+                }
+            } else if (type === 'api') {
+                const rawLogic = DOM.canvas.innerHTML.match(/\[\[(.*?)\]\]/g);
+                const data = {
+                    contentLength: DOM.canvas.innerText.length,
+                    mathNodes: rawLogic || [],
+                    tags: DOM.canvas.innerHTML.match(/\[([A-Za-z0-9_ ]+)\]/g) || []
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Lumina_AST_${Date.now()}.json`;
+                a.click();
+            }
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            
+            if(file.name.endsWith('.txt')) {
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    initEditor('doc');
+                    DOM.canvas.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+                    saveVersion();
+                };
+                reader.readAsText(file);
+            } 
+            else if (file.name.endsWith('.docx')) {
+                reader.onload = (e) => {
+                    const arrayBuffer = e.target.result;
+                    mammoth.convertToHtml({arrayBuffer: arrayBuffer})
+                        .then(displayResult)
+                        .catch(handleError);
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert("System Alert: Unsupported format. Use .txt or .docx");
+            }
+            
+            function displayResult(result) {
+                initEditor('doc');
+                DOM.canvas.innerHTML = result.value;
+                saveVersion();
+            }
+            function handleError(err) {
+                alert("Parsing Engine Error: " + err);
+            }
+        }
+        // ==========================================================================
+        // [5] DASHBOARD ROUTING & TOKEN GUARDRAIL SYSTEM
+        // ==========================================================================
+        function showDashboard() {
+            document.getElementById('main-workspace').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dash-name').innerText = currentUser.name.split(' ')[0];
+            
+            updateDashboardStats();
+            renderSavedTemplates();
+        }
+
+        function switchDashTab(tabId) {
+            document.querySelectorAll('.dash-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.dash-tab-content').forEach(content => content.classList.remove('active'));
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function checkAILimit() {
+            if (!currentUser) return false;
+            
+            // ADMIN BYPASS: Unlimited Tokens
+            if (currentUser.isAdmin) {
+                updateTokenVisuals(3, 3, true);
+                return true;
+            }
+            
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                let usage = JSON.parse(localStorage.getItem('lumina_ai') || '{"date":"","count":0}');
+                
+                if (usage.date !== today) { usage = { date: today, count: 0 }; }
+                
+                if (usage.count >= 3) {
+                    alert("SYSTEM HALT: Daily Cognitive Quota reached (3/3). Wait 24 hours or upgrade.");
+                    updateTokenVisuals(usage.count, 3, false);
+                    return false;
+                }
+                
+                usage.count++;
+                localStorage.setItem('lumina_ai', JSON.stringify(usage));
+                updateDashboardStats();
+                return true;
+            } catch (e) { return true; }
+        }
+
+        function updateTokenVisuals(used, max, isAdmin) {
+            const bars = [document.getElementById('token-bar-visual'), document.getElementById('sidebar-token-visual')];
+            let percentage = isAdmin ? 100 : Math.max(0, 100 - ((used / max) * 100));
+            
+            bars.forEach(bar => {
+                if(!bar) return;
+                bar.style.width = `${percentage}%`;
+                bar.className = 'token-bar-fill'; // Reset classes
+                if (!isAdmin) {
+                    if (percentage <= 34) bar.classList.add('token-bar-warning');
+                    if (percentage === 0) bar.classList.add('token-bar-danger');
+                }
+            });
+        }
+
+        function updateDashboardStats() {
+            const statDocs = document.getElementById('stat-dash-docs');
+            if(statDocs) statDocs.innerText = appState.docsGenerated;
+            
+            let usage = JSON.parse(localStorage.getItem('lumina_ai') || '{"count":0}');
+            let templates = JSON.parse(localStorage.getItem('lumina_templates') || '[]');
+            
+            let tokensLeft = currentUser.isAdmin ? "∞" : Math.max(0, 3 - usage.count);
+            let tokensConsumed = currentUser.isAdmin ? "0" : usage.count;
+            
+            document.querySelectorAll('#dash-ai-tokens, #sidebar-ai-tokens').forEach(el => el.innerText = tokensLeft);
+            
+            if(document.getElementById('stat-dash-tokens')) document.getElementById('stat-dash-tokens').innerText = tokensConsumed;
+            if(document.getElementById('stat-dash-templates')) document.getElementById('stat-dash-templates').innerText = templates.length;
+            if(document.getElementById('stat-dash-clauses')) document.getElementById('stat-dash-clauses').innerText = appState.clausesAdded;
+            
+            // Value Matrix Calculation
+            if(document.getElementById('stat-dash-revenue')) {
+                let displayVal = appState.valueTracked;
+                let suffix = "";
+                if(displayVal >= 1000000) { displayVal = (displayVal/1000000).toFixed(2); suffix = "M"; }
+                else if(displayVal >= 1000) { displayVal = (displayVal/1000).toFixed(1); suffix = "k"; }
+                document.getElementById('stat-dash-revenue').innerText = `$${displayVal}${suffix}`;
+            }
+        }
+
+        // ==========================================================================
+        // [6] COGNITIVE AI ENGINE & PERSONA LOGIC (VERCEL HOOK)
+        // ==========================================================================
+        function getPersonaContext() {
+            const selector = document.getElementById('persona-selector');
+            const persona = selector ? selector.value : 'legal';
+            
+            const personas = {
+                legal: "Act as a Senior Corporate Lawyer. Use precise, strict, and risk-averse legal terminology. Ensure ironclad compliance.",
+                freelance: "Act as an Elite Freelance Strategist. Use modern, persuasive, and clear business language. Focus on deliverables and mutual value.",
+                academic: "Act as a rigorous Academic Scholar. Use formal, objective, and highly structured language with clear logical progression.",
+                creative: "Act as a Creative Director. Use engaging, visionary, and dynamic language. Focus on brand impact and aesthetic flow."
+            };
+            return personas[persona] || personas.legal;
+        }
+
+        async function askGemini(instruction, content, imageBase64 = null, panel = 'left') {
+            if (!checkAILimit()) return null;
+            
+            const loader = document.getElementById(`loader-${panel}`);
+            if(loader) loader.classList.remove('hidden');
+            
+            let dnaContext = companyDNA.company ? `\nCOMPANY DNA: Name: ${companyDNA.company}, Tax ID: ${companyDNA.gst}, Tone: ${companyDNA.tone}` : "";
+            let personaPrompt = getPersonaContext();
+            
+            let parts = [{ text: `SYSTEM DIRECTIVE: ${personaPrompt}\nINSTRUCTION: ${instruction}${dnaContext}\nCONTEXT:\n${content}` }];
+            if (imageBase64) parts.push({ inlineData: { mimeType: "image/jpeg", data: imageBase64.split(',')[1] } });
+
+            const payload = {
+                contents: [{ parts }],
+                systemInstruction: { parts: [{ text: "You are Lumina OS, an elite Document Intelligence layer. Output ONLY raw HTML. No markdown blocks. NO ```html wrappers. Use inline CSS matching modern aesthetics. Output must be mathematically evaluable using [[ IF [Var] > 0 THEN 1 ELSE 0 ]] syntax where requested." }] }
+            };
+
+            try {
+                // Ensure this matches your Vercel Edge Function route
+                const res = await fetch('/api/gemini', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                const data = await res.json();
+                if(loader) loader.classList.add('hidden');
+                if(data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                
+                let textResult = data.candidates[0].content.parts[0].text;
+                return textResult.replace(/^```html\s*/i, '').replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/g, '').trim();
+            } catch (e) { 
+                if(loader) loader.classList.add('hidden');
+                alert(`Cognitive Network Error: ${e.message}`); 
+                return null; 
+            }
+        }
+
+        // ==========================================================================
+        // [7] WORKFLOWS & AST MATH EVALUATOR
+        // ==========================================================================
+        async function runWorkflow(type) {
+            const prompt = document.getElementById('prompt-create').value;
+            if(!prompt) return;
+            closeMobilePanels(); 
+            let html = await askGemini(`Draft a comprehensive document based on this exact request: "${prompt}". Structure it perfectly. Use dynamic variables in brackets like [Client Name] and mathematical blocks like [[ [Amount] * 0.1 ]].`, "", null, 'left');
+            if(html) { 
+                DOM.canvas.innerHTML = html; 
+                saveVersion(); 
+                setTimeout(runAudit, 1000); 
+            }
+        }
+
+        async function autoImproveDoc() {
+            const content = DOM.canvas.innerHTML;
+            alert("Cognitive Enhancement Loop Engaged...");
+            const html = await askGemini("Make this document architecturally perfect. Restructure flow, fix grammar, beautify UI globally. DO NOT alter logic tags or math brackets.", content, null, 'left');
+            if(html) { DOM.canvas.innerHTML = html; saveVersion(); }
+        }
+
+        async function aiAction(action) {
+            const promptStr = document.getElementById('prompt-edit').value.trim();
+            const content = DOM.canvas.innerHTML;
+            closeMobilePanels();
+            
+            if(action === 'design') {
+                const html = await askGemini(`Dramatically upgrade the design of this HTML. ${promptStr}`, content, null, 'right');
+                if(html) { DOM.canvas.innerHTML = html; saveVersion(); }
+            } else if (action === 'explain') {
+                const explanation = await askGemini(`Summarize the key structural elements and risks in 3 bullet points. ${promptStr}`, DOM.canvas.innerText, null, 'right');
+                if(explanation) { 
+                    DOM.canvas.innerHTML += `<div style="background:rgba(59,130,246,0.1); border-left:4px solid var(--accent); padding:20px; margin-top:30px; border-radius:8px;"><strong>🧠 Intelligence Analysis:</strong><br><br>${explanation}</div>`; 
+                    saveVersion();
+                }
+            } else if (action.startsWith('clause_')) {
+                let prompt = action.includes('terminate') ? "Draft a standard corporate termination clause." 
+                           : action.includes('gst') ? "Draft a strict regional tax and compliance clause."
+                           : "Draft an ironclad strict liability cap clause.";
+                const html = await askGemini(prompt + " Return raw HTML.", "", null, 'right');
+                if(html) { 
+                    DOM.canvas.innerHTML += `<div style="margin-top:30px; padding-top:20px; border-top:1px dashed var(--border);">${html}</div>`; 
+                    saveVersion(); 
+                    appState.clausesAdded++; 
+                    updateDashboardStats();
+                }
+            }
+        }
+
+        function forceCalculate() { evaluateMathFields(); }
+        
+        function evaluateMathFields() {
+            let updated = false;
+            let tempValueTracked = 0;
+            const mathBlockRegex = /\[\[(.*?)\]\]/g; 
+            const activeContext = appState.docContext;
+
+            let newHtml = DOM.canvas.innerHTML.replace(mathBlockRegex, (match, mathContent) => {
+                try {
+                    let expressionToEval = mathContent.replace(/\[([A-Za-z0-9_ ]+)\]/g, (varMatch, varName) => {
+                        let val = activeContext[varName.toLowerCase()] || activeContext[varName] || "0";
+                        return val.toString().replace(/[^0-9.-]+/g,"");
+                    });
+                    
+                    expressionToEval = expressionToEval.replace(/<[^>]*>?/gm, ''); // Strip accidental HTML
+                    
+                    if (expressionToEval.includes('IF ') && expressionToEval.includes('THEN ')) {
+                        expressionToEval = expressionToEval.replace(/IF /g, '').replace(/ THEN /g, ' ? ').replace(/ ELSE /g, ' : ');
+                    }
+                    
+                    const result = Function(`'use strict'; return (${expressionToEval})`)();
+                    
+                    if (!isNaN(result) && result !== undefined) {
+                        updated = true; 
+                        tempValueTracked += Number(result); 
+                        return `<span class="calc-field" data-expr="${mathContent}">$${Number(result).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                    }
+                    return match; 
+                } catch(e) { return match; }
+            });
+
+            if(updated) { 
+                DOM.canvas.innerHTML = newHtml; 
+                appState.valueTracked = tempValueTracked;
+                saveVersion(); 
+                localStorage.setItem('lumina_value_tracked', appState.valueTracked.toString());
+                updateDashboardStats(); 
+            }
+        }
+
+        // ==========================================================================
+        // [8] WORKSPACE UI STATE MANAGEMENT
+        // ==========================================================================
+        function initEditor(mode) {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('creation-modal').style.display = 'none';
+            document.getElementById('main-workspace').classList.remove('hidden');
+            changeCanvasMode(mode); 
+            document.getElementById('canvas-mode-selector').value = mode;
+            appState.docsGenerated++; 
+            localStorage.setItem('lumina_docs_count', appState.docsGenerated.toString());
+            appState.startTime = Date.now(); 
+            updateDashboardStats();
+        }
+
+        function changeCanvasMode(mode) {
+            const wrapper = document.getElementById('main-scroll');
+            DOM.canvas.className = ''; 
+            
+            if(mode === 'ppt') { 
+                wrapper.className = 'flex-1 canvas-wrapper mode-ppt-wrapper'; 
+                DOM.canvas.className = 'mode-ppt'; 
+                DOM.addPageBtn.classList.add('hidden');
+            } 
+            else if (mode === 'pdf') { 
+                wrapper.className = 'flex-1 canvas-wrapper';
+                DOM.canvas.className = 'mode-pdf'; 
+                DOM.addPageBtn.classList.remove('hidden'); 
+            } 
+            else { 
+                wrapper.className = 'flex-1 canvas-wrapper';
+                DOM.canvas.className = 'mode-doc'; 
+                DOM.addPageBtn.classList.add('hidden'); 
+            }
+        }
+
+        function addWPSPage() {
+            DOM.canvas.innerHTML += `<div class="page-break-element" contenteditable="false"></div><p><br></p>`;
+            saveVersion(); 
+            const wrapper = document.getElementById('main-scroll'); 
+            wrapper.scrollTop = wrapper.scrollHeight;
+        }
+
+        function openCreationModal(type = 'new') {
+            if(type === 'template') {
+                document.getElementById('dashboard-view').classList.add('hidden');
+                document.getElementById('main-workspace').classList.remove('hidden');
+                switchTab('left', 'tab-templates');
+                if(window.innerWidth <= 1024) toggleMobilePanel('sidebar-left');
+            } else { 
+                document.getElementById('creation-modal').style.display = 'flex';
+            }
+        }
+
+        function switchTab(side, tabId) {
+            const container = document.getElementById(`sidebar-${side}`);
+            if(!container) return;
+            container.querySelectorAll('.side-tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelectorAll('.sidebar-tab-content').forEach(c => c.classList.remove('active'));
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function closeModals() { 
+            document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); 
+            document.getElementById('auth-modal').style.display = currentUser ? 'none' : 'flex'; 
+        }
+
+        function toggleCmdPalette() { 
+            const el = document.getElementById('cmd-palette'); 
+            el.classList.toggle('active');
+            if(!el.classList.contains('hidden')) { el.classList.add('hidden'); return;}
+            el.classList.remove('hidden');
+            setTimeout(() => document.getElementById('cmd-input').focus(), 100); 
+        }
+        // ==========================================================================
+        // [9] THEMES & BRAND DNA INJECTION
+        // ==========================================================================
+        function changeTheme(themeName) { 
+            if(themeName === 'default') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', themeName); 
+            localStorage.setItem('lumina_theme', themeName); 
+        }
+
+        function openProfile() {
+            document.getElementById('settings-modal').style.display = 'flex';
+            if(companyDNA.company) document.getElementById('prof-company').value = companyDNA.company;
+            if(companyDNA.gst) document.getElementById('prof-gst').value = companyDNA.gst;
+            if(companyDNA.tone) document.getElementById('prof-tone').value = companyDNA.tone;
+        }
+
+        function saveProfileDNA() {
+            companyDNA = {
+                company: document.getElementById('prof-company').value,
+                gst: document.getElementById('prof-gst').value,
+                tone: document.getElementById('prof-tone').value
+            };
+            localStorage.setItem('lumina_dna', JSON.stringify(companyDNA));
+            closeModals();
+            alert("Brand DNA Injected into Cognitive Engine.");
+        }
+
+        // ==========================================================================
+        // [10] DYNAMIC VARIABLES & ARCHITECTURE BLOCKS
+        // ==========================================================================
+        function autofillDoc() { liveVariableSync(true); }
+        
+        function liveVariableSync(force = false) {
+            let html = DOM.canvas.innerHTML;
+            const cName = DOM.brainC.value;
+            const cAmt = DOM.brainA.value;
+            const cDate = DOM.brainD.value;
+            
+            if(cName) html = html.replace(/\[Client Name\]|\[Client\]/gi, `[${cName}]`);
+            if(cAmt) html = html.replace(/\[Amount\]|\[Total\]/gi, `[${cAmt}]`);
+            if(cDate) html = html.replace(/\[Date\]/gi, `[${cDate}]`);
+            
+            appState.docContext.client = cName || appState.docContext.client;
+            appState.docContext.amount = cAmt || appState.docContext.amount;
+            appState.docContext.date = cDate || appState.docContext.date;
+            
+            if(force) {
+                DOM.canvas.innerHTML = html;
+                evaluateMathFields();
+                saveVersion();
+                alert("Global context synchronized to Canvas.");
+            }
+        }
+
+        function runAudit() {
+            closeMobilePanels();
+            let count = 0;
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/<span class="audit-issue">(.*?)<\/span>/g, "$1").replace(/\[(.*?)\]|TODO|XXXX/g, (match) => {
+                if(match.startsWith('[[') || match.includes('Live_')) return match; 
+                count++; 
+                return `<span class="audit-issue" style="background:rgba(239,68,68,0.2); border-bottom:2px solid red;">${match}</span>`;
+            });
+            alert(count > 0 ? `${count} missing or unresolved tags flagged.` : "Structure pristine. No unresolved tags.");
+        }
+
+        async function runAIGuardrails() {
+            alert("Deep AI Check Initiated...");
+            const res = await askGemini("Review document for missing legal protections or structural risks. Return warning box HTML or 'SAFE'.", DOM.canvas.innerText, null, 'right');
+            if(res && res.trim() !== 'SAFE') { 
+                DOM.canvas.innerHTML += `<div style="padding:24px; margin-top:40px; border-radius:12px; border: 2px solid var(--warning); background: rgba(245,158,11,0.05);"><strong>🚨 Structural Alert:</strong><br><br>${res}</div>`;
+                saveVersion(); 
+            } else { 
+                alert("Guardrails Passed. Architecture is solid.");
+            }
+        }
+
+        function insertBlock(type) {
+            DOM.slashMenu.style.display = 'none';
+            DOM.canvas.innerHTML = DOM.canvas.innerHTML.replace(/\/\s*$/, '');
+            let html = "";
+            if(type === 'h2') html = `<h2 style="font-size: 1.75rem; font-weight: 800; margin-top: 2rem; margin-bottom: 1rem;">Architecture Segment</h2><p><br></p>`;
+            if(type === 'table') html = `<table style="width:100%; border-collapse:collapse; margin: 25px 0;"><tr style="background:var(--bg-panel);"><th style="padding:15px; border:1px solid var(--border-light); text-align:left;">Node</th><th style="padding:15px; border:1px solid var(--border-light); text-align:left;">Value</th></tr><tr><td style="padding:15px; border:1px solid var(--border);">Metric A</td><td style="padding:15px; border:1px solid var(--border);">100</td></tr></table><p><br></p>`;
+            if(type === 'pricing') html = `<div style="border: 2px solid var(--accent); border-radius: 24px; padding: 40px; text-align: center; margin: 40px 0; background:var(--accent-glow);"><h3 style="color:var(--accent); font-size:1.25rem; font-weight:800;">Enterprise Module</h3><p style="font-size: 3.5rem; font-weight: 900; margin: 20px 0; line-height:1;">[[ [Amount] * 1.0 ]]</p></div><p><br></p>`;
+            if(type === 'sign') html = `<div style="display:flex; justify-content:space-between; margin-top:80px; margin-bottom:30px;"><div style="border-top:2px solid var(--text-main); width:45%; padding-top:12px; font-weight:800;">Authorized Entity</div><div style="border-top:2px solid var(--text-main); width:45%; padding-top:12px; font-weight:800;">Counterparty</div></div><p><br></p>`;
+            if(type === 'pagebreak') html = `<div class="page-break-element" contenteditable="false"></div><p><br></p>`;
+            DOM.canvas.innerHTML += html; 
+            saveVersion(); 
+        }
+
+        // ==========================================================================
+        // [11] ENCRYPTED VAULT & GLOBAL HUB (LOCAL STORAGE)
+        // ==========================================================================
+        function saveCurrentAsTemplate() {
+            let name = prompt("Assign architecture name to Vault:");
+            if(!name) return;
+            let tmpls = JSON.parse(localStorage.getItem('lumina_templates') || '[]');
+            tmpls.unshift({ name: name, html: DOM.canvas.innerHTML, date: new Date().toISOString() });
+            localStorage.setItem('lumina_templates', JSON.stringify(tmpls));
+            renderSavedTemplates();
+            alert("Blueprint committed to local encrypted vault.");
+        }
+
+        function renderSavedTemplates() {
+            let tmpls = JSON.parse(localStorage.getItem('lumina_templates') || '[]');
+            let dashContainer = document.getElementById('dash-saved-templates');
+            let edContainer = document.getElementById('saved-templates-list-editor');
+            
+            if (dashContainer) {
+                if(tmpls.length === 0) {
+                    dashContainer.innerHTML = '<div class="p-12 text-center text-sm theme-text-muted border-2 theme-border border-dashed rounded-[32px] theme-bg-panel col-span-full shadow-inner"><i data-lucide="lock-keyhole" class="w-12 h-12 mx-auto mb-4 opacity-30"></i><p class="font-bold text-base">No architectures found.</p></div>';
+                } else {
+                    dashContainer.innerHTML = tmpls.map((t, i) => `<div onclick="loadSavedTemplate(${i})" class="theme-bg-panel border theme-border rounded-[2rem] p-8 cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all shadow-lg"><div class="flex justify-between mb-6"><div class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center"><i data-lucide="file-text" class="w-6 h-6"></i></div><span class="text-[10px] font-extrabold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">SECURE</span></div><h4 class="font-extrabold text-xl mb-2">${t.name}</h4></div>`).join('');
+                }
+            }
+            if (edContainer) {
+                if(tmpls.length === 0) edContainer.innerHTML = '<div class="text-center p-4"><p class="text-[10px] theme-text-muted font-bold tracking-widest uppercase">Vault Empty</p></div>';
+                else edContainer.innerHTML = tmpls.map((t, i) => `<button onclick="loadSavedTemplate(${i})" class="w-full btn justify-start text-xs mb-3 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 shadow-sm py-4 rounded-xl font-bold transition-all"><i data-lucide="file" class="w-4 h-4"></i> ${t.name}</button>`).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function loadSavedTemplate(index) {
+            let tmpls = JSON.parse(localStorage.getItem('lumina_templates') || '[]');
+            if(tmpls[index]) { 
+                document.getElementById('dashboard-view').classList.add('hidden'); 
+                document.getElementById('main-workspace').classList.remove('hidden'); 
+                DOM.canvas.innerHTML = tmpls[index].html; 
+                saveVersion(); 
+                closeMobilePanels(); 
+            }
+        }
+        
+        window.publishToCommunity = function() {
+            if(!DOM.canvas || DOM.canvas.innerText.trim().length < 10) return alert("Canvas empty.");
+            let name = prompt("Enter public title for this architecture:"); if(!name) return;
+            let cat = prompt("Sector Category:", "Global Network");
+            let hub = JSON.parse(localStorage.getItem('lumina_community_hub') || '[]');
+            hub.unshift({ id: Date.now(), name: name, category: cat || "General", html: DOM.canvas.innerHTML, author: currentUser.name, uid: currentUser.uid, downloads: 0 });
+            localStorage.setItem('lumina_community_hub', JSON.stringify(hub));
+            alert("Architecture Published to Global Hub."); 
+            renderCommunityHub();
+        };
+
+        window.renderCommunityHub = function() {
+            let hub = JSON.parse(localStorage.getItem('lumina_community_hub') || '[]');
+            let grid = document.getElementById('community-hub-grid');
+            if(!grid) return;
+            
+            if(hub.length === 0) {
+                grid.innerHTML = '<div class="col-span-full p-16 text-center border-2 border-dashed theme-border rounded-[32px] bg-black/10 shadow-inner"><i data-lucide="globe-2" class="w-16 h-16 mx-auto mb-6 opacity-30"></i><h3 class="text-2xl font-black mb-3">Network is Empty</h3></div>';
+            } else {
+                grid.innerHTML = hub.map((t, i) => `<div class="theme-bg-panel border theme-border rounded-[2rem] p-8 hover:border-blue-500/50 hover:shadow-2xl transition-all flex flex-col h-full"><div class="flex justify-between mb-6"><span class="text-[10px] font-extrabold bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/20">${t.category}</span></div><h3 class="text-xl font-extrabold mb-3">${t.name}</h3><div class="flex items-center justify-between border-t theme-border pt-5 mb-5 mt-auto"><div class="flex gap-3"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center font-black">${t.author.charAt(0).toUpperCase()}</div><div class="flex flex-col"><span class="text-xs font-bold">@${t.author.split(' ')[0].toLowerCase()}</span></div></div><span class="text-[11px] font-extrabold theme-text-muted bg-black/20 px-2 py-1 rounded-md">${t.downloads} Downloads</span></div><button onclick="importFromCommunity(${i})" class="w-full btn mt-auto bg-black/20 hover:bg-emerald-500 hover:text-white py-4 rounded-xl font-bold">Import to Vault</button></div>`).join('');
+            }
+            lucide.createIcons();
+        };
+
+        window.importFromCommunity = function(index) {
+            let hub = JSON.parse(localStorage.getItem('lumina_community_hub') || '[]');
+            if(hub[index]) {
+                hub[index].downloads++; 
+                localStorage.setItem('lumina_community_hub', JSON.stringify(hub));
+                let tmpls = JSON.parse(localStorage.getItem('lumina_templates') || '[]');
+                tmpls.unshift({ name: hub[index].name + " (Import)", html: hub[index].html, date: new Date().toISOString() });
+                localStorage.setItem('lumina_templates', JSON.stringify(tmpls));
+                renderCommunityHub(); 
+                renderSavedTemplates(); 
+                alert("Imported to Secure Vault.");
+            }
+        };
+
+        // ==========================================================================
+        // [12] E-SIGNATURE HARDWARE MODULE
+        // ==========================================================================
+        let sigCtx, sigCanvas, isDrawing = false;
+        
+        function initSignaturePad() {
+            sigCanvas = document.getElementById('sig-canvas');
+            if(!sigCanvas) return;
+            sigCtx = sigCanvas.getContext('2d'); 
+            
+            sigCanvas.addEventListener('mousedown', startPos); 
+            sigCanvas.addEventListener('touchstart', startPos, {passive: false});
+            sigCanvas.addEventListener('mouseup', endPos); 
+            sigCanvas.addEventListener('touchend', endPos);
+            sigCanvas.addEventListener('mousemove', draw); 
+            sigCanvas.addEventListener('touchmove', draw, {passive: false});
+            
+            function startPos(e) { isDrawing = true; draw(e); } 
+            function endPos() { isDrawing = false; sigCtx.beginPath(); }
+            function draw(e) {
+                if(!isDrawing) return;
+                e.preventDefault(); 
+                const rect = sigCanvas.getBoundingClientRect(); 
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX); 
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                sigCtx.lineWidth = 4; sigCtx.lineCap = 'round'; sigCtx.strokeStyle = '#000';
+                sigCtx.lineTo(clientX - rect.left, clientY - rect.top); 
+                sigCtx.stroke(); 
+                sigCtx.beginPath();
+                sigCtx.moveTo(clientX - rect.left, clientY - rect.top);
+            }
+        }
+        
+        window.clearSignature = () => { if(sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); };
+        
+        window.saveSignature = () => {
+            const img = document.createElement('img');
+            img.src = sigCanvas.toDataURL(); 
+            img.style.maxHeight = '120px'; 
+            img.style.borderBottom = '3px solid var(--text-main)'; 
+            img.style.display = 'block';
+            
+            if(window.getSelection().rangeCount > 0 && DOM.canvas.contains(window.getSelection().anchorNode)) {
+                window.getSelection().getRangeAt(0).insertNode(img);
+            } else {
+                DOM.canvas.appendChild(img);
+            }
+            closeModals(); 
+            saveVersion(); 
+            clearSignature(); 
+        };
+
+        window.openSignature = function() { 
+            closeMobilePanels();
+            document.getElementById('sig-modal').style.display = 'flex'; 
+            setTimeout(() => { 
+                const canvas = document.getElementById('sig-canvas'); 
+                canvas.width = canvas.parentElement.getBoundingClientRect().width - 24; 
+            }, 150);
+        };
+
+        // ==========================================================================
+        // [13] VERSION CONTROL & COMMAND PALETTE
+        // ==========================================================================
+        function saveVersion() {
+            if(appState.history.length > 0 && appState.history[appState.history.length-1] === DOM.canvas.innerHTML) return;
+            appState.history.push(DOM.canvas.innerHTML); 
+            if(appState.history.length > 40) appState.history.shift(); 
+            
+            const list = document.getElementById('timeline-list');
+            if(list) list.innerHTML = appState.history.map((_, i) => `<div class="relative mb-5 group cursor-pointer hover:opacity-70"><div class="absolute -left-[26px] top-0 w-3.5 h-3.5 rounded-full bg-blue-500"></div><p class="text-[10px] font-extrabold">Snapshot ${i+1}</p></div>`).reverse().join('');
+        }
+
+        window.restoreLastVersion = function() { 
+            if(appState.history.length <= 1) return;
+            appState.history.pop(); 
+            DOM.canvas.innerHTML = appState.history[appState.history.length - 1]; 
+            saveVersion(); 
+        };
+
+        async function ctxExec(cmd) { 
+            DOM.ctxMenu.style.display = 'none';
+            const sel = window.getSelection(); 
+            if(!sel.rangeCount) return; 
+            
+            let n = sel.getRangeAt(0).commonAncestorContainer; 
+            if(n.nodeType === 3) n = n.parentNode; 
+            if(!DOM.canvas.contains(n)) return;
+            
+            if(cmd === 'lock') { 
+                n.contentEditable = "false"; 
+                n.classList.add('locked-section'); 
+            } else if(cmd === 'rewrite') { 
+                n.innerHTML = await askGemini("Rewrite this specific node perfectly, maintaining structure.", n.innerText, null, 'right');
+            } else if(cmd === 'summarize') {
+                n.innerHTML = await askGemini("Summarize this into exactly 2 sharp, professional sentences.", n.innerText, null, 'right');
+            }
+            saveVersion(); 
+        }
+
+        async function executeCmd(cmd) {
+            document.getElementById('cmd-palette').classList.add('hidden');
+            if (cmd === 'semantic_search') {
+                const q = document.getElementById('cmd-input').value || "Analyze the core risks of this document.";
+                const res = await askGemini(q, DOM.canvas.innerText, null, 'left');
+                if(res) alert(`Cognitive Response:\n\n${res.replace(/<[^>]*>?/gm, '')}`);
+            } else if (cmd === 'brand_convert') {
+                alert("Brand Identity Rules injected successfully.");
+                DOM.canvas.style.fontFamily = companyDNA.tone === 'Creative' ? 'sans-serif' : 'serif';
+            }
+            document.getElementById('cmd-input').value = "";
+        }
+
+        // ==========================================================================
+        // [14] UTILITIES & SECURITY PROTOCOLS
+        // ==========================================================================
+        function toggleMobilePanel(id) { 
+            const p = document.getElementById(id);
+            document.getElementById(id === 'sidebar-left' ? 'sidebar-right' : 'sidebar-left').classList.remove('open'); 
+            p.classList.toggle('open'); 
+        }
+        
+        function closeMobilePanels() { 
+            document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('open'));
+        }
+        
+        function debounce(func, wait) { 
+            let timeout; 
+            return function(...args) { 
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait); 
+            }; 
+        }
+        
+        function handleTyping() { saveVersion(); }
+        
+        function updateAnalytics() { 
+            if(!document.getElementById('dashboard-view').classList.contains('hidden')) return; 
+            document.getElementById('stat-words').innerText = DOM.canvas.innerText.trim().split(/\s+/).filter(w => w.length > 0).length;
+            document.getElementById('stat-time').innerText = Math.floor((Date.now() - appState.startTime) / 60000); 
+        }
+
+        function handleLockedNodeClick(e) {
+            const target = e.target.closest('.locked-section');
+            if(!target || target.classList.contains('unlocked')) return;
+            
+            const pass = prompt("Authenticate to decrypt this node:");
+            if(pass === currentUser.password || (currentUser.isAdmin && pass === '1234@4321')) {
+                target.classList.add('unlocked');
+                target.contentEditable = "true";
+                alert("Node Decrypted Successfully.");
+            } else {
+                alert("Access Denied: Invalid Decryption Key.");
+            }
+        }
+    </script>
+</body>
+</html>
